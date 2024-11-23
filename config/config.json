@@ -1,0 +1,47 @@
+{
+  "development": {
+    "username": "doadmin",
+    "password": "AVNS_aUi8F8GExOFBoS_wP0Y",
+    "database": "defaultdb",
+    "host": "chatlogodb-do-user-8320828-0.h.db.ondigitalocean.com",
+    "dialect": "postgres",
+    "port": 25060,
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      }
+    },
+    "ssl": true
+  },
+  "test": {
+    "username": "doadmin",
+    "password": "AVNS_aUi8F8GExOFBoS_wP0Y",
+    "database": "defaultdb",
+    "host": "chatlogodb-do-user-8320828-0.h.db.ondigitalocean.com",
+    "dialect": "postgres",
+    "port": 25060,
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      }
+    },
+    "ssl": true
+  },
+  "production": {
+    "username": "doadmin",
+    "password": "AVNS_aUi8F8GExOFBoS_wP0Y",
+    "database": "defaultdb",
+    "host": "chatlogodb-do-user-8320828-0.h.db.ondigitalocean.com",
+    "dialect": "postgres",
+    "port": 25060,
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      }
+    },
+    "ssl": true
+  }
+}
