@@ -1,24 +1,14 @@
-import mysql, { Pool, PoolConnection, RowDataPacket } from 'mysql2';
+import mysql, { Pool, RowDataPacket } from 'mysql2';
 import { ServerTeacher, TeacherIdModel } from './types';
 import TeacherHelper from './helpers/teacherHelper';
+import { alfaCalendarsTable, alfaCustomersTable } from './db_pools';
 // MySQL connection pool setup
 require('dotenv').config();
 
-// MySQL connection pool setup
-const pool: Pool = mysql.createPool({
-    host: process.env.DB_HOST_MAIN,
-    user: process.env.DB_USER_MAIN,
-    password: process.env.DB_PASSWORD_MAIN,
-    database: process.env.DB_NAME_MAIN,
-});
 
-const teacherTable = 'teachers';
 
-const alfaCalendarsTable = 'alfa_calendars';
 
-const alfaCustomersTable = 'alfa_customers';
-
-export async function fetchTeacher(teacherId: number): Promise<RowDataPacket | null> {
+export async function fetchTeacher(pool: Pool, teacherId: number): Promise<RowDataPacket | null> {
     return new Promise((resolve, reject) => {
         pool.query<RowDataPacket[]>('SELECT * FROM teachers WHERE id = ?', [teacherId], (error, results) => {
             if (error) {
@@ -36,7 +26,7 @@ export async function fetchTeacher(teacherId: number): Promise<RowDataPacket | n
 
 //fetch Teachers and parse them to ServerTeacher type
 
-export async function fetchAllTeachers(): Promise<ServerTeacher[]> {
+export async function fetchAllTeachers(pool: Pool): Promise<ServerTeacher[]> {
     return new Promise((resolve, reject) => {
         pool.query<RowDataPacket[]>('SELECT * FROM teachers WHERE enabled = 1', (error, results) => {
             console.log('error:', error);
@@ -60,7 +50,7 @@ export async function fetchAllTeachers(): Promise<ServerTeacher[]> {
 
 //select first row from alfa_calendars table
 
-export async function fetchAlfaCalendar(): Promise<RowDataPacket | null> {
+export async function fetchAlfaCalendar(pool: Pool): Promise<RowDataPacket | null> {
     return new Promise((resolve, reject) => {
         pool.query<RowDataPacket[]>('SELECT * FROM alfa_calendars LIMIT 1', (error, results) => {
             if (error) {
@@ -79,7 +69,7 @@ export async function fetchAlfaCalendar(): Promise<RowDataPacket | null> {
 
 //select first row from alfa_customers table
 
-export async function fetchAlfaCustomer(): Promise<RowDataPacket | null> {
+export async function fetchAlfaCustomer(pool: Pool): Promise<RowDataPacket | null> {
     return new Promise((resolve, reject) => {
         pool.query<RowDataPacket[]>('SELECT * FROM alfa_customers LIMIT 1', (error, results) => {
             console.log('start alfa_customers');
@@ -103,7 +93,7 @@ export async function fetchAlfaCustomer(): Promise<RowDataPacket | null> {
 
 
 
-export async function findTeacherCustomer(): Promise<RowDataPacket[] | null> {
+export async function findTeacherCustomer(pool: Pool): Promise<RowDataPacket[] | null> {
     const idsModel: TeacherIdModel[] = await TeacherHelper.getTeachersIdServerId();
     const teacherIds: number[] = idsModel.map((teacher) => Number(teacher.serverId));
 

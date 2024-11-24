@@ -6,6 +6,7 @@ import { fetchAlfaCalendar, fetchAlfaCustomer, fetchAllTeachers, findTeacherCust
 import { ServerTeacher } from './types';
 import TeacherHelper from './helpers/teacherHelper';
 import teacherRouter from './router/teacherRouter';
+import { mainPool, plPool, uaPool } from './db_pools';
 
 const app = express();
 const port = 3000;
@@ -38,7 +39,7 @@ app.get('/', (req: Request, res: Response) => {
 //save teachers from main
 async function SaveTeachersFromMain() {
   try {
-    const teachers: ServerTeacher[] = await fetchAllTeachers();
+    const teachers: ServerTeacher[] = await fetchAllTeachers(mainPool);
     console.log('All Teachers:', teachers.length);
     if (teachers.length > 0) {
       console.log('First Teacher:', teachers[0]);
@@ -64,7 +65,7 @@ async function SaveTeachersFromMain() {
 
 async function testAlfaCustomer () {
   try {
-    const res = await fetchAlfaCustomer();
+    const res = await fetchAlfaCustomer(plPool);
     if (res && res.length > 0) {
       console.log('Alfa Teacher Customer:', res[0]);
     }
@@ -77,7 +78,7 @@ async function testAlfaCustomer () {
 
 async function testFindTeacherCustomer() {
   try {
-    const teacher = await findTeacherCustomer();
+    const teacher = await findTeacherCustomer(mainPool);
     console.log('Teacher Customer:', teacher);
   } catch (error) {
     console.error('Error fetching teacher customer:', error);
@@ -88,7 +89,7 @@ async function testFindTeacherCustomer() {
 server.listen(port, async () => {
   console.log(`Server started at http://localhost:${port}`);
   try {
-   // await testAlfaCustomer();
+   await testAlfaCustomer();
   } catch (error) {
     console.error('Error starting server:', error);
   }
