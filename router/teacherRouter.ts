@@ -1,25 +1,21 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import TeacherHelper from '../helpers/teacherHelper';
+require('dotenv').config();
 const router = express.Router();
 
-// Method to get a teacher by email
-// router.get('/teacher', async (req: Request, res: Response) => {
-//   const { email } = req.query;
-//   if (!email || typeof email !== 'string') {
-//     return res.status(400).json({ message: 'Email is required and must be a string' });
-//   }
+// Middleware to check token for all requests
+const tokenMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  const token = req.headers['authorization'];
 
-//   try {
-//     const teacher = await TeacherHelper.getTeacherByEmail(email);
-//     if (!teacher) {
-//       return res.status(404).json({ message: 'Teacher not found' });
-//     }
-//     res.json(teacher);
-//   } catch (error) {
-//     console.error('Error fetching teacher by email:', error);
-//     res.status(500).json({ message: 'Internal server error' });
-//   }
-// });
+  if (!token || token !== process.env.AUTH_TOKEN) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+  next();
+};
+
+// Apply tokenMiddleware to all routes under /api
+router.use('/', tokenMiddleware);
 
 // Method to get all active teachers
 router.get('/teachers', async (req: Request, res: Response) => {
@@ -81,5 +77,26 @@ router.delete('/teacher/:id', async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+//find teacher by email post method
+router.post('/teacher/email', async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: 'Email is required' });
+  }
+
+  try {
+    const teacher = await TeacherHelper.findTeacherByEmail(email);
+    if (!teacher) {
+      return res.status(404).json({ message: 'Teacher not found' });
+    }
+    res.json(teacher);
+  } catch (error) {
+    console.error('Error fetching teacher by email:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 
 export default router;

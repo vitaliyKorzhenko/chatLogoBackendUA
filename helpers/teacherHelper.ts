@@ -125,6 +125,52 @@ class TeacherHelper {
         throw error;
         }
     }
+
+    //find teacher by serverId
+    static async findTeacherByServerId(serverId: string): Promise<Teacher | null> {
+        try {
+        const teacher = await Teacher.findOne({
+            where: {
+            serverId,
+            },
+        });
+        return teacher;
+        } catch (error) {
+        console.error('Error fetching teacher:', error);
+        throw error;
+        }
+    }
+
+    //find teacher by email
+    static async findTeacherByEmail(email: string): Promise<Teacher | null> {
+        try {
+        const teacher = await Teacher.findOne({
+            where: {
+            email,
+            },
+        });
+        return teacher;
+        } catch (error) {
+        console.error('Error fetching teacher:', error);
+        throw error;
+        }
+    }
+
+    //find teachers by source
+    static async findTeachersBySource(source: string): Promise<Teacher[]> {
+        try {
+        const teachers = await Teacher.findAll({
+            where: {
+            source,
+            },
+        });
+        return teachers;
+        } catch (error) {
+        console.error('Error fetching teachers:', error);
+        throw error;
+        }
+    }
+
 }
 
 export default TeacherHelper;

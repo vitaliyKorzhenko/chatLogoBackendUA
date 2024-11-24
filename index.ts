@@ -5,9 +5,16 @@ import socketHandler from './socketHandler';
 import { fetchAlfaCalendar, fetchAlfaCustomer, fetchAllTeachers, findTeacherCustomer } from './db_teachers';
 import { ServerTeacher } from './types';
 import TeacherHelper from './helpers/teacherHelper';
+import teacherRouter from './router/teacherRouter';
 
 const app = express();
 const port = 3000;
+
+// Подключаем middleware для обработки JSON
+app.use(express.json());
+
+// Подключаем ваш роутер на /api
+app.use('/api', teacherRouter);
 
 // Создаем HTTP сервер на основе Express
 const server = http.createServer(app);
@@ -81,12 +88,8 @@ async function testFindTeacherCustomer() {
 server.listen(port, async () => {
   console.log(`Server started at http://localhost:${port}`);
   try {
-    await testFindTeacherCustomer();
-
-
-    
+   // await testAlfaCustomer();
   } catch (error) {
     console.error('Error starting server:', error);
-    
   }
 });
