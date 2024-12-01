@@ -1,14 +1,12 @@
 {
-
-    "compilerOptions": {
-      "target": "ES6",
-      "module": "CommonJS",
-      "outDir": "./dist",
-      "rootDir": "./src",
-      "strict": true,
-      "esModuleInterop": true,
-    },
-    "include": ["src/**/*.ts", "tests/**/*.ts", "jest.config.ts"],
-    "exclude": ["node_modules"],
-  }
-  
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "CommonJS",
+    "outDir": "./dist",
+    "rootDir": "./",
+    "strict": true,
+    "esModuleInterop": true
+  },
+  "include": ["*.ts", "helpers/**/*.ts", "router/**/*.ts", "config/**/*.ts"],
+  "exclude": ["node_modules"]
+}

@@ -91,18 +91,18 @@ class Wazzup24Messenger {
     }
 
     public async sendFile(data: any): Promise<any> {
-        const params = {
-            chatId: data.chatId || data.remoteAddress?.replace(/[+]|tel:/g, ""),
-            chatType: "whatsapp",
-            channelId: data.channelId !== this.channelId ? this.channelId : data.channelId,
-            content: data.attachments[0]?.publicUrl,
-        };
+        // const params: { chatId: any; chatType: string; channelId: any; text: any; templateId?: any; templateValues?: any[] } = {
+        //     chatId: data.chatId || data.remoteAddress?.replace(/[+]|tel:/g, ""),
+        //     chatType: "whatsapp",
+        //     channelId: data.channelId !== this.channelId ? this.channelId : data.channelId,
+        //     content: '',
+        // };
 
-        return this.sendRequest("message", params, "POST");
+        return this.sendRequest("message", '', "POST");
     }
 
     public async sendText(data: any): Promise<any> {
-        const params = {
+        const params: any = {
             chatId: data.chatId || data.remoteAddress?.replace(/[+]|tel:/g, ""),
             chatType: "whatsapp",
             channelId: data.channelId !== this.channelId ? this.channelId : data.channelId,
