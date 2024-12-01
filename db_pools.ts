@@ -2,6 +2,24 @@
 
 import mysql, { Pool } from 'mysql2';
 
+
+//tables names
+export const teacherTable = 'teachers';
+
+export const alfaCalendarsTable = 'alfa_calendars';
+
+export const alfaCustomersTable = 'alfa_customers';
+
+export const alfa_messages = 'alfa_messages';
+
+export const alfa_chats = 'alfa_chats';
+
+export const bumess_messages = 'bumess_messages';
+
+export const bumess_chats = 'bumess_chats';
+
+export const bumess_projects = 'bumess_projects';
+
 const mainConfig = {
     host: process.env.DB_HOST_MAIN,
     user: process.env.DB_USER_MAIN,
@@ -33,9 +51,12 @@ const plConfig = {
 };
 export const plPool: Pool = mysql.createPool(plConfig);
 
-//tables names
-export const teacherTable = 'teachers';
 
-export const alfaCalendarsTable = 'alfa_calendars';
 
-export const alfaCustomersTable = 'alfa_customers';
+//for testing purposes
+export const testMainPool: Pool = mysql.createPool({
+    host: '198.20.115.73',
+    user: 'aleks3',
+    password: 'klsdfjhor854here7DR93#e$5k75sdf$55',
+    database: 'main',
+});

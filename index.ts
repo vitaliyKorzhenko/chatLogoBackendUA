@@ -2,17 +2,27 @@ import express, { Request, Response } from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import socketHandler from './socketHandler';
-import { fetchAlfaCalendar, fetchAlfaCustomer, fetchAllTeachers, findTeacherCustomer } from './db_teachers';
-import { ServerTeacher } from './types';
+import { countAlfaCalendars, fetchAlfaCalendar, fetchAlfaCustomer, fetchAlfaMessages, fetchAllTables, fetchAllTeachers, fetchBoomiesChats, fetchBoomiesMessages, fetchBoomiesProjects, fetchTableColumns, findActiveAlfaCustomers,  findAlfaChat, findBoomiesChat, findTeacherCustomerWithChats } from './db_teachers';
+import { ServerTeacher, TeacherCustomerModel } from './types';
 import TeacherHelper from './helpers/teacherHelper';
 import teacherRouter from './router/teacherRouter';
-import { mainPool, plPool, uaPool } from './db_pools';
+import { bumess_messages, mainPool, plPool, testMainPool, uaPool } from './db_pools';
+import { startCronJobs } from './cronTasks';
+import cors from 'cors'; // Импортируем cors
+import { mainBotToken, sendMessage, testChatId } from './sendTgMessage';
+import { Pool } from 'mysql2';
 
 const app = express();
-const port = 3000;
+const port = 4030;
 
 // Подключаем middleware для обработки JSON
 app.use(express.json());
+
+app.use(cors({
+  origin: '*', // Разрешаем запросы с любого источника
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 // Подключаем ваш роутер на /api
 app.use('/api', teacherRouter);
@@ -36,36 +46,11 @@ app.get('/', (req: Request, res: Response) => {
   res.send('Hello World!');
 });
 
-//save teachers from main
-async function SaveTeachersFromMain() {
-  try {
-    const teachers: ServerTeacher[] = await fetchAllTeachers(mainPool);
-    console.log('All Teachers:', teachers.length);
-    if (teachers.length > 0) {
-      console.log('First Teacher:', teachers[0]);
-
-      try {
-        let createTeachers = await TeacherHelper.createTeachers(teachers);
-        console.log('Teachers created:', createTeachers.length);
-        
-        
-      } catch (error) {
-        console.error('Error creating teachers:', error);
-        
-      }
-    } else {
-      console.log('No teachers found');
-    }
-  } catch (error) {
-    console.error('Error during teacher fetch:', error);
-  }
-  
-}
 
 
 async function testAlfaCustomer () {
   try {
-    const res = await fetchAlfaCustomer(plPool);
+    const res = await fetchAlfaCustomer(testMainPool);
     if (res && res.length > 0) {
       console.log('Alfa Teacher Customer:', res[0]);
     }
@@ -76,20 +61,39 @@ async function testAlfaCustomer () {
 
 //test findTeacherCustomer
 
-async function testFindTeacherCustomer() {
+async function testFindTeacherCustomer(pool: Pool, source: string) {
   try {
-    const teacher = await findTeacherCustomer(mainPool);
-    console.log('Teacher Customer:', teacher);
+    const teacherCustomers:TeacherCustomerModel[]  | null= await findTeacherCustomerWithChats(pool, source);
+   
+    if (teacherCustomers) {
+      console.log('Teacher Customer:', teacherCustomers[0]);
+      await TeacherHelper.createTeacherCustomerIfNotExist(teacherCustomers, source);
+    }
   } catch (error) {
     console.error('Error fetching teacher customer:', error);
   }
 }
 
+//test count distinct customer_id and teacher_id from alfa_calendars table
+async function testCountDistinct() {
+  try {
+    const res = await countAlfaCalendars(plPool, 'pl');
+   if (res) {
+     console.log('Count distinct:', res);
+   }
+  } catch (error) {
+    console.error('Error fetching alfa calendar:', error);
+  }
+}
+
+
+//startCronJobs();
+
+
 // Запуск сервера и затем вызов fetchAllTeachers
 server.listen(port, async () => {
-  console.log(`Server started at http://localhost:${port}`);
   try {
-   await testAlfaCustomer();
+    console.log(`Server started at http://localhost:${port}`);
   } catch (error) {
     console.error('Error starting server:', error);
   }

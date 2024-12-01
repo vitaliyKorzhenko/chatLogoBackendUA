@@ -3,6 +3,8 @@ import TeacherHelper from '../helpers/teacherHelper';
 require('dotenv').config();
 const router = express.Router();
 
+
+
 // Middleware to check token for all requests
 const tokenMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const token = req.headers['authorization'];
@@ -89,7 +91,7 @@ router.post('/teacher/email', async (req: Request, res: Response) => {
   try {
     const teacher = await TeacherHelper.findTeacherByEmail(email);
     if (!teacher) {
-      return res.status(404).json({ message: 'Teacher not found' });
+      return res.status(200).json(null);
     }
     res.json(teacher);
   } catch (error) {
@@ -98,5 +100,26 @@ router.post('/teacher/email', async (req: Request, res: Response) => {
   }
 });
 
+
+//find teacher info by email post method
+router.post('/teacher/info', async (req: Request, res: Response) => {
+  console.log('======= Start find teacher info by email =====', req.body);
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: 'Email is required' });
+  }
+
+  try {
+    const teacher = await TeacherHelper.findTeacherInfoWithCustomersByEmail(email);
+    if (!teacher) {
+      return res.status(404).json({ message: 'Teacher not found' });
+    }
+    res.json(teacher);
+  } catch (error) {
+    console.error('Error fetching teacher by email:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
 export default router;
