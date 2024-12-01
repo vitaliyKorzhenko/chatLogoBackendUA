@@ -30,16 +30,16 @@ app.use('/api', teacherRouter);
 // Создаем HTTP сервер на основе Express
 const server = http.createServer(app);
 
-// Создаем Socket.IO сервер и подключаем его к HTTP серверу
-const io = new Server(server, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST'],
-  },
-});
+// // Создаем Socket.IO сервер и подключаем его к HTTP серверу
+// const io = new Server(server, {
+//   cors: {
+//     origin: '*',
+//     methods: ['GET', 'POST'],
+//   },
+// });
 
-// Используем обработчик сокетов
-socketHandler(io);
+// // Используем обработчик сокетов
+// socketHandler(io);
 
 // Маршрут для проверки сервера
 app.get('/', (req: Request, res: Response) => {
