@@ -14,10 +14,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const http_1 = __importDefault(require("http"));
+const socket_io_1 = require("socket.io");
+const socketHandler_1 = __importDefault(require("./socketHandler"));
 const db_teachers_1 = require("./db_teachers");
 const teacherHelper_1 = __importDefault(require("./helpers/teacherHelper"));
 const teacherRouter_1 = __importDefault(require("./router/teacherRouter"));
-const db_pools_1 = require("./db_pools");
 const cors_1 = __importDefault(require("cors")); // Импортируем cors
 const app = (0, express_1.default)();
 const port = 4030;
@@ -33,65 +34,88 @@ app.use('/api', teacherRouter_1.default);
 // Создаем HTTP сервер на основе Express
 const server = http_1.default.createServer(app);
 // // Создаем Socket.IO сервер и подключаем его к HTTP серверу
-// const io = new Server(server, {
-//   cors: {
-//     origin: '*',
-//     methods: ['GET', 'POST'],
-//   },
-// });
-// // Используем обработчик сокетов
-// socketHandler(io);
+const io = new socket_io_1.Server(server, {
+    cors: {
+        origin: '*',
+        methods: ['GET', 'POST'],
+    },
+});
+// Используем обработчик сокетов
+(0, socketHandler_1.default)(io);
 // Маршрут для проверки сервера
 app.get('/', (req, res) => {
     res.send('Hello World!');
 });
-function testAlfaCustomer() {
+//startAllCronJobs();
+function LoadChatMessagesFromSource(pool, source) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const res = yield (0, db_teachers_1.fetchAlfaCustomer)(db_pools_1.testMainPool);
-            if (res && res.length > 0) {
-                console.log('Alfa Teacher Customer:', res[0]);
+            //step 1 find current ChatLoader
+            let chatLoader = yield teacherHelper_1.default.findChatLoaderBySource(source);
+            if (!chatLoader) {
+                console.log('ChatLoader not found for source:', source);
+                return;
+            }
+            //findMessagesWithFullInfo use source and lastDate from chatLoader
+            console.log('ChatLoader:', chatLoader);
+            let rows = yield (0, db_teachers_1.findMessagesWithFullInfo)(pool, source, Number(chatLoader.serverId));
+            if (rows) {
+                console.log('Count:', rows.length);
+                console.log('First row:', rows[0]);
+                //parse rows and save to chat_messages ChatMessagesModel array
+                let chatMessages = [];
+                let orderNumber = chatLoader.orderNumber;
+                //array customerIds
+                let customerIds = rows.map((row) => row.customerId.toString());
+                //find teacherId by customerId
+                let teachers = yield teacherHelper_1.default.findTeacherCustomersByCustomerIdsAndSource(customerIds, source);
+                console.log('Teachers-CUSTOMERS:', teachers.length);
+                console.log('First Teacher:', teachers[0]);
+                rows.forEach((row) => {
+                    //1 find teacherId by customerId
+                    let teacher = teachers.find((teacher) => teacher.customerId == row.customerId.toString());
+                    console.log('Find Teacher', teacher);
+                    if (teacher) {
+                        let chatMessage = {
+                            messageText: row.messageText,
+                            teacherId: teacher.teacherId,
+                            orderNumber: orderNumber,
+                            customerId: row.customerId,
+                            messageType: row.messageType,
+                            attachemnt: '',
+                            isActive: true,
+                            serverDate: new Date(),
+                            additionalInfo: {
+                                alfaChatId: row.alfaChatId,
+                                tgChatId: row.tgChatId,
+                            },
+                            serverId: row.messageId,
+                            source: source,
+                            inBound: true,
+                        };
+                        chatMessages.push(chatMessage);
+                        orderNumber++;
+                    }
+                });
+                //save chatMessages to chat_messages table
+                console.log('ChatMessages:', chatMessages.length);
+                console.log('Last ChatMessage:', chatMessages[chatMessages.length - 1]);
+                yield teacherHelper_1.default.createChatMessages(chatMessages, source);
+                //update chatLoader update last serverId and orderNumber
+                yield teacherHelper_1.default.updateChatLoaderBySource(source, chatMessages[chatMessages.length - 1].serverId, orderNumber);
             }
         }
         catch (error) {
-            console.error('Error fetching teacher customer:', error);
+            console.error('Error fetching alfa messages:', error);
         }
     });
 }
-//test findTeacherCustomer
-function testFindTeacherCustomer(pool, source) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const teacherCustomers = yield (0, db_teachers_1.findTeacherCustomerWithChats)(pool, source);
-            if (teacherCustomers) {
-                console.log('Teacher Customer:', teacherCustomers[0]);
-                yield teacherHelper_1.default.createTeacherCustomerIfNotExist(teacherCustomers, source);
-            }
-        }
-        catch (error) {
-            console.error('Error fetching teacher customer:', error);
-        }
-    });
-}
-//test count distinct customer_id and teacher_id from alfa_calendars table
-function testCountDistinct() {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const res = yield (0, db_teachers_1.countAlfaCalendars)(db_pools_1.plPool, 'pl');
-            if (res) {
-                console.log('Count distinct:', res);
-            }
-        }
-        catch (error) {
-            console.error('Error fetching alfa calendar:', error);
-        }
-    });
-}
-//startCronJobs();
 // Запуск сервера и затем вызов fetchAllTeachers
 server.listen(port, () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         console.log(`Server started at http://localhost:${port}`);
+        // await LoadChatMessagesFromSource(uaPool, 'ua');
+        // await LoadChatMessagesFromSource(plPool, 'pl');
     }
     catch (error) {
         console.error('Error starting server:', error);

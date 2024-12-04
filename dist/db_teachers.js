@@ -28,6 +28,7 @@ exports.fetchAlfaChats = fetchAlfaChats;
 exports.findAlfaChat = findAlfaChat;
 exports.findActiveAlfaCustomers = findActiveAlfaCustomers;
 exports.findTeacherCustomerWithChats = findTeacherCustomerWithChats;
+exports.findMessagesWithFullInfo = findMessagesWithFullInfo;
 const teacherHelper_1 = __importDefault(require("./helpers/teacherHelper"));
 const db_pools_1 = require("./db_pools");
 // MySQL connection pool setup
@@ -400,6 +401,53 @@ function findTeacherCustomerWithChats(pool, source) {
             };
             // Start fetching batches
             fetchBatch();
+        });
+    });
+}
+//find messages with full info use source and  lastMessageId
+// SELECT
+//  bm.id as messageId, 
+// bm.text as messageText,
+// ac.id as alfaChatId, 
+// ac.chat_id as tgChatId,
+// acac.alfa_customer_id as customerId,
+// ac.channel as messageType
+// FROM bumess_messages as bm INNER JOIN bumess_chats as bc 
+// ON bm.bumess_chat_id = bc.id
+// INNER JOIN alfa_chats as ac
+// ON bc.chatable_id = ac.id
+// INNER JOIN alfa_customer_alfa_chat as acac
+// ON ac.id = acac.alfa_chat_id
+// WHERE DATE(bm.created_at) = CURDATE() 
+// AND inbound = 1 
+// AND bm.id > 225590
+// ORDER BY bm.id 
+//not use teacher_id ony this request
+function findMessagesWithFullInfo(pool, source, lastMessageId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return new Promise((resolve, reject) => {
+            const query = `
+            SELECT bm.id as messageId, bm.text as messageText, ac.id as alfaChatId, ac.chat_id as tgChatId,
+                   acac.alfa_customer_id as customerId, ac.channel as messageType
+            FROM bumess_messages as bm
+            INNER JOIN bumess_chats as bc ON bm.bumess_chat_id = bc.id
+            INNER JOIN alfa_chats as ac ON bc.chatable_id = ac.id
+            INNER JOIN alfa_customer_alfa_chat as acac ON ac.id = acac.alfa_chat_id
+            WHERE DATE(bm.created_at) = CURDATE() AND inbound = 1 AND bm.id > ?
+            ORDER BY bm.id
+        `;
+            pool.query(query, [lastMessageId], (error, results) => {
+                if (error) {
+                    console.error('Error fetching messages with full info:', error);
+                    return reject(error);
+                }
+                if (results.length === 0) {
+                    console.log('No messages found.');
+                    return resolve(null);
+                }
+                console.log(`Fetched ${results.length} messages.`, results[0]);
+                resolve(results);
+            });
         });
     });
 }

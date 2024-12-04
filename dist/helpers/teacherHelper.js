@@ -15,6 +15,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
 const Teacher_1 = __importDefault(require("../models/Teacher"));
 const Teacher_Customer_1 = __importDefault(require("../models/Teacher_Customer"));
+const ChatLoaders_1 = __importDefault(require("../models/ChatLoaders"));
+const ChatMessages_1 = __importDefault(require("../models/ChatMessages"));
 class TeacherHelper {
     // Метод для создания нового учителя
     static createTeacher(data) {
@@ -295,6 +297,174 @@ class TeacherHelper {
             }
             catch (error) {
                 console.error('Error fetching teacher info with customers:', error);
+                throw error;
+            }
+        });
+    }
+    //find chat Loader by source
+    static findChatLoaderBySource(source) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const chatLoader = yield ChatLoaders_1.default.findOne({
+                    where: {
+                        source: source
+                    },
+                    raw: true
+                });
+                return chatLoader;
+            }
+            catch (error) {
+                console.error('Error fetching chat loader:', error);
+                throw error;
+            }
+        });
+    }
+    //update Chat Loader by source (serverId, orderNumber)
+    static updateChatLoaderBySource(source, serverId, orderNumber) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                //update chat loader where source = source
+                const chatLoader = yield ChatLoaders_1.default.findOne({
+                    where: {
+                        source: source
+                    }
+                });
+                if (!chatLoader) {
+                    console.log('Chat Loader not found');
+                    return null;
+                }
+                yield chatLoader.update({
+                    serverId: serverId,
+                    orderNumber: orderNumber
+                });
+                console.log('Chat Loader updated:', chatLoader.toJSON());
+                return chatLoader;
+            }
+            catch (error) {
+                console.error('Error updating chat loader:', error);
+                throw error;
+            }
+        });
+    }
+    //create Chat Messages use ChatMessagesModel[] array (and update chat loader)
+    static createChatMessages(chatMessages, source) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const chatLoader = yield TeacherHelper.findChatLoaderBySource(source);
+                if (!chatLoader) {
+                    console.log('Chat Loader not found');
+                    return null;
+                }
+                let newChatMessagesData = [];
+                for (let i = 0; i < chatMessages.length; i++) {
+                    newChatMessagesData.push({
+                        messageText: chatMessages[i].messageText,
+                        teacherId: chatMessages[i].teacherId,
+                        orderNumber: chatMessages[i].orderNumber,
+                        customerId: chatMessages[i].customerId,
+                        messageType: chatMessages[i].messageType,
+                        attachemnt: chatMessages[i].attachemnt,
+                        isActive: true,
+                        serverDate: new Date(),
+                        additionalInfo: chatMessages[i].additionalInfo,
+                        source: source,
+                        serverId: chatMessages[i].serverId,
+                    });
+                }
+                const newChatMessages = yield ChatMessages_1.default.bulkCreate(newChatMessagesData);
+                console.log('New chat messages created:', newChatMessages.map((item) => item.toJSON()));
+                yield TeacherHelper.updateChatLoaderBySource(source, chatMessages[chatMessages.length - 1].serverId, chatMessages[chatMessages.length - 1].orderNumber);
+                return newChatMessages;
+            }
+            catch (error) {
+                console.error('Error creating chat messages:', error);
+                throw error;
+            }
+        });
+    }
+    //find teachers by customer id and source 
+    static findTeacherByCustomerIdAndSource(customerId, source) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const teacherCustomer = yield Teacher_Customer_1.default.findOne({
+                    where: {
+                        customerId: customerId,
+                        source: source,
+                        isActive: true
+                    }
+                });
+                if (!teacherCustomer) {
+                    console.log('Teacher Customer not found');
+                    return null;
+                }
+                return teacherCustomer;
+            }
+            catch (error) {
+                console.error('Error fetching teachers:', error);
+                throw error;
+            }
+        });
+    }
+    //find all teachers customer by customerIds array and source
+    static findTeacherCustomersByCustomerIdsAndSource(customerIds, source) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const teacherCustomers = yield Teacher_Customer_1.default.findAll({
+                    where: {
+                        customerId: { [sequelize_1.Op.in]: customerIds },
+                        source: source,
+                        isActive: true
+                    },
+                    raw: true
+                });
+                return teacherCustomers;
+            }
+            catch (error) {
+                console.error('Error fetching teachers:', error);
+                throw error;
+            }
+        });
+    }
+    //find ChatMessages by teacherId and customerId and source
+    static findChatMessagesByTeacherIdAndCustomerIdAndSource(teacherId_1, customerId_1) {
+        return __awaiter(this, arguments, void 0, function* (teacherId, customerId, source = 'ua') {
+            try {
+                const chatMessages = yield ChatMessages_1.default.findAll({
+                    where: {
+                        teacherId: teacherId,
+                        customerId: customerId,
+                        source: source
+                    },
+                    raw: true
+                });
+                return chatMessages;
+            }
+            catch (error) {
+                console.error('Error fetching chat messages:', error);
+                throw error;
+            }
+        });
+    }
+    //create ChatMessages use teacherId, customerId, messageText, messageType, source
+    static createChatMessageForTeacher(teacherId_1, customerId_1, messageText_1, messageType_1) {
+        return __awaiter(this, arguments, void 0, function* (teacherId, customerId, messageText, messageType, source = 'ua') {
+            try {
+                const newChatMessage = yield ChatMessages_1.default.create({
+                    messageText,
+                    teacherId,
+                    customerId,
+                    messageType,
+                    source,
+                    isActive: true,
+                    serverDate: new Date(),
+                    inBound: false,
+                    serverId: '0'
+                });
+                console.log('New chat message created:', newChatMessage.toJSON());
+                return newChatMessage;
+            }
+            catch (error) {
+                console.error('Error creating chat message:', error);
                 throw error;
             }
         });
