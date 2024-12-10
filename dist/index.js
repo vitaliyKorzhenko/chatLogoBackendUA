@@ -20,8 +20,10 @@ const db_teachers_1 = require("./db_teachers");
 const teacherHelper_1 = __importDefault(require("./helpers/teacherHelper"));
 const teacherRouter_1 = __importDefault(require("./router/teacherRouter"));
 const cors_1 = __importDefault(require("cors")); // Импортируем cors
+const chatLogoBot_1 = require("./chatLogoBot");
 const app = (0, express_1.default)();
-const port = 4030;
+//use env port or 4030
+const port = process.env.PORT || 4030;
 // Подключаем middleware для обработки JSON
 app.use(express_1.default.json());
 app.use((0, cors_1.default)({
@@ -113,7 +115,14 @@ function LoadChatMessagesFromSource(pool, source) {
 // Запуск сервера и затем вызов fetchAllTeachers
 server.listen(port, () => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        console.log(`Server started at http://localhost:${port}`);
+        console.log(`Server started at PORT :${port}`);
+        try {
+            yield (0, chatLogoBot_1.launchBot)();
+            console.log('Bot launched successfully!');
+        }
+        catch (error) {
+            console.error('Error launching bot:', error);
+        }
         // await LoadChatMessagesFromSource(uaPool, 'ua');
         // await LoadChatMessagesFromSource(plPool, 'pl');
     }

@@ -71,11 +71,12 @@ class TeacherCustomer extends Model {
   public customerName!: string;
   public customerPhones!: string[] | null;
   public customerEmails!: string[] | null;
-  public chatInfo!: Record<string, any> | null;
+  public chatInfo!: string;
   public channelId!: string;
   public chatId!: string;
   public trackingCode!: string;
   public isActive!: boolean;
+  public realChatId!: string;
   public source!: string;
 }
 
@@ -117,6 +118,10 @@ TeacherCustomer.init(
       defaultValue: true,
     },
     chatId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    realChatId: {
       type: DataTypes.STRING,
       allowNull: true,
     },

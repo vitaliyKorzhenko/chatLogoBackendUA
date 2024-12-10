@@ -50,3 +50,44 @@ export interface TeacherInfoWithCustomer {
     source: string;
     customers: CustomerInfo[];
 }
+
+//chat messages model
+
+export interface ChatMessagesModel {
+    teacherId: number;
+    orderNumber: number;
+    customerId: string;
+    messageType: string;
+    attachemnt: string | null;
+    isActive: boolean;
+    serverDate: Date | null;
+    additionalInfo: object | null;
+    serverId: string;
+    source: string;
+    inBound: boolean;
+    messageText: string;
+}
+
+export interface TeacherInfoModel {
+    teacherId: number;
+    teacherName: string;
+    teacherEmail: string;
+    customerName: string;
+    customerEmails: string[];
+    customerPhones: string[];
+    customerId: string;
+    chatInfo: string;
+    source: string;
+    chatId: string;
+    realChatId: string;
+  
+  }
+
+  export interface IChatMessage {
+    clientId: number;
+    text: string;
+    timestamp: string;
+    source: string;
+    sender: string
+    id: number;
+  }

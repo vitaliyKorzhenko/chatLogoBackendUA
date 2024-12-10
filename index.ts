@@ -2,18 +2,21 @@ import express, { Request, Response } from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import socketHandler from './socketHandler';
-import { countAlfaCalendars, fetchAlfaCalendar, fetchAlfaCustomer, fetchAlfaMessages, fetchAllTables, fetchAllTeachers, fetchBoomiesChats, fetchBoomiesMessages, fetchBoomiesProjects, fetchTableColumns, findActiveAlfaCustomers,  findAlfaChat, findBoomiesChat, findTeacherCustomerWithChats } from './db_teachers';
+import { countAlfaCalendars, fetchAlfaCalendar, fetchAlfaCustomer, fetchAlfaMessages, fetchAllTables, fetchAllTeachers, fetchBoomiesChats, fetchBoomiesMessages, fetchBoomiesProjects, fetchTableColumns, findActiveAlfaCustomers,  findAlfaChat, findBoomiesChat, findMessagesWithFullInfo, findTeacherCustomerWithChats } from './db_teachers';
 import { ServerTeacher, TeacherCustomerModel } from './types';
 import TeacherHelper from './helpers/teacherHelper';
 import teacherRouter from './router/teacherRouter';
 import { bumess_messages, mainPool, plPool, testMainPool, uaPool } from './db_pools';
-import { startCronJobs } from './cronTasks';
+import { findTeachersCustomer, startAllCronJobs } from './cronTasks';
 import cors from 'cors'; // Импортируем cors
 import { mainBotToken, sendMessage, testChatId } from './sendTgMessage';
 import { Pool } from 'mysql2';
+import { ChatMessagesModel } from './types';
+import { launchBot } from './chatLogoBot';
 
 const app = express();
-const port = 4030;
+//use env port or 4030
+const port = process.env.PORT || 4030;
 
 // Подключаем middleware для обработки JSON
 app.use(express.json());
@@ -31,15 +34,15 @@ app.use('/api', teacherRouter);
 const server = http.createServer(app);
 
 // // Создаем Socket.IO сервер и подключаем его к HTTP серверу
-// const io = new Server(server, {
-//   cors: {
-//     origin: '*',
-//     methods: ['GET', 'POST'],
-//   },
-// });
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST'],
+  },
+});
 
-// // Используем обработчик сокетов
-// socketHandler(io);
+// Используем обработчик сокетов
+socketHandler(io);
 
 // Маршрут для проверки сервера
 app.get('/', (req: Request, res: Response) => {
@@ -48,53 +51,89 @@ app.get('/', (req: Request, res: Response) => {
 
 
 
-async function testAlfaCustomer () {
+
+//startAllCronJobs();
+
+
+async function LoadChatMessagesFromSource (pool: Pool, source: string) {
   try {
-    const res = await fetchAlfaCustomer(testMainPool);
-    if (res && res.length > 0) {
-      console.log('Alfa Teacher Customer:', res[0]);
+    //step 1 find current ChatLoader
+    let chatLoader = await TeacherHelper.findChatLoaderBySource(source);
+    if (!chatLoader) {
+      console.log('ChatLoader not found for source:', source);
+      return;
     }
+    //findMessagesWithFullInfo use source and lastDate from chatLoader
+    console.log('ChatLoader:', chatLoader);
+    let rows = await findMessagesWithFullInfo(pool, source, Number(chatLoader.serverId));
+    if (rows) {
+      console.log('Count:', rows.length);
+      console.log('First row:', rows[0]);
+      //parse rows and save to chat_messages ChatMessagesModel array
+      let chatMessages: ChatMessagesModel[] = [];
+      let orderNumber = chatLoader.orderNumber;
+      //array customerIds
+      let customerIds: string[] = rows.map((row) => row.customerId.toString());
+      //find teacherId by customerId
+      let teachers = await TeacherHelper.findTeacherCustomersByCustomerIdsAndSource(customerIds, source);
+      console.log('Teachers-CUSTOMERS:', teachers.length);
+      console.log('First Teacher:', teachers[0]);
+
+    rows.forEach( (row) => {
+      //1 find teacherId by customerId
+      let teacher = teachers.find((teacher) => teacher.customerId == row.customerId.toString());
+      console.log('Find Teacher', teacher);
+      if (teacher) {
+        let chatMessage: ChatMessagesModel = {
+          messageText: row.messageText,
+          teacherId: teacher.teacherId,
+          orderNumber: orderNumber,
+          customerId: row.customerId,
+          messageType: row.messageType,
+          attachemnt: '',
+          isActive: true,
+          serverDate: new Date(),
+          additionalInfo: {
+            alfaChatId: row.alfaChatId,
+            tgChatId: row.tgChatId,
+          },
+          serverId: row.messageId ,
+          source: source,
+          inBound: true,
+        };
+        chatMessages.push(chatMessage);
+        orderNumber++;
+      }
+    });
+
+    //save chatMessages to chat_messages table
+    console.log('ChatMessages:', chatMessages.length);
+    console.log('Last ChatMessage:', chatMessages[chatMessages.length - 1]);
+    await TeacherHelper.createChatMessages(chatMessages, source);
+    //update chatLoader update last serverId and orderNumber
+    await TeacherHelper.updateChatLoaderBySource(source, chatMessages[chatMessages.length - 1].serverId, orderNumber);
+
+  }
+
   } catch (error) {
-    console.error('Error fetching teacher customer:', error);
+    console.error('Error fetching alfa messages:', error);
   }
 }
-
-//test findTeacherCustomer
-
-async function testFindTeacherCustomer(pool: Pool, source: string) {
-  try {
-    const teacherCustomers:TeacherCustomerModel[]  | null= await findTeacherCustomerWithChats(pool, source);
-   
-    if (teacherCustomers) {
-      console.log('Teacher Customer:', teacherCustomers[0]);
-      await TeacherHelper.createTeacherCustomerIfNotExist(teacherCustomers, source);
-    }
-  } catch (error) {
-    console.error('Error fetching teacher customer:', error);
-  }
-}
-
-//test count distinct customer_id and teacher_id from alfa_calendars table
-async function testCountDistinct() {
-  try {
-    const res = await countAlfaCalendars(plPool, 'pl');
-   if (res) {
-     console.log('Count distinct:', res);
-   }
-  } catch (error) {
-    console.error('Error fetching alfa calendar:', error);
-  }
-}
-
-
-//startCronJobs();
 
 
 // Запуск сервера и затем вызов fetchAllTeachers
 server.listen(port, async () => {
   try {
-    console.log(`Server started at http://localhost:${port}`);
-  } catch (error) {
+    console.log(`Server started at PORT :${port}`);
+    try {
+      await launchBot();
+      console.log('Bot launched successfully!');
+    } catch (error) {
+      console.error('Error launching bot:', error);
+    }
+    // await LoadChatMessagesFromSource(uaPool, 'ua');
+    // await LoadChatMessagesFromSource(plPool, 'pl');
+  } catch (error) { 
     console.error('Error starting server:', error);
   }
 });

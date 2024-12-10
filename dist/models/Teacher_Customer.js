@@ -109,6 +109,10 @@ TeacherCustomer.init({
         type: sequelize_1.DataTypes.STRING,
         allowNull: true,
     },
+    realChatId: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: true,
+    },
     channelId: {
         type: sequelize_1.DataTypes.STRING,
         allowNull: true,

@@ -426,3 +426,58 @@ export async function findTeacherCustomerWithChats(pool: Pool, source: string): 
     });
 }
 
+
+
+//find messages with full info use source and  lastMessageId
+// SELECT
+//  bm.id as messageId, 
+// bm.text as messageText,
+// ac.id as alfaChatId, 
+// ac.chat_id as tgChatId,
+// acac.alfa_customer_id as customerId,
+// ac.channel as messageType
+// FROM bumess_messages as bm INNER JOIN bumess_chats as bc 
+// ON bm.bumess_chat_id = bc.id
+// INNER JOIN alfa_chats as ac
+// ON bc.chatable_id = ac.id
+// INNER JOIN alfa_customer_alfa_chat as acac
+// ON ac.id = acac.alfa_chat_id
+// WHERE DATE(bm.created_at) = CURDATE() 
+// AND inbound = 1 
+// AND bm.id > 225590
+// ORDER BY bm.id 
+//not use teacher_id ony this request
+
+export async function findMessagesWithFullInfo(pool: Pool, source: string, lastMessageId: number): Promise<RowDataPacket[] | null> {
+
+    return new Promise((resolve, reject) => {
+
+        const query = `
+            SELECT bm.id as messageId, bm.text as messageText, ac.id as alfaChatId, ac.chat_id as tgChatId,
+                   acac.alfa_customer_id as customerId, ac.channel as messageType
+            FROM bumess_messages as bm
+            INNER JOIN bumess_chats as bc ON bm.bumess_chat_id = bc.id
+            INNER JOIN alfa_chats as ac ON bc.chatable_id = ac.id
+            INNER JOIN alfa_customer_alfa_chat as acac ON ac.id = acac.alfa_chat_id
+            WHERE DATE(bm.created_at) = CURDATE() AND inbound = 1 AND bm.id > ?
+            ORDER BY bm.id
+        `;
+
+        pool.query<RowDataPacket[]>(query, [lastMessageId], (error, results) => {
+            if (error) {
+                console.error('Error fetching messages with full info:', error);
+                return reject(error);
+            }
+
+            if (results.length === 0) {
+                console.log('No messages found.');
+                return resolve(null);
+            }
+
+            console.log(`Fetched ${results.length} messages.`, results[0]);
+            resolve(results);
+        });
+    });
+}
+
+

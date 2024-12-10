@@ -1,8 +1,11 @@
 import { Op } from "sequelize";
 import Teacher from "../models/Teacher";
-import { ServerTeacher, TeacherCustomerModel, TeacherIdModel, TeacherInfoWithCustomer } from "../types";
+import { ServerTeacher, TeacherCustomerModel, TeacherIdModel, TeacherInfoModel, TeacherInfoWithCustomer } from "../types";
 import TeacherCustomer from "../models/Teacher_Customer";
-import { channel } from "diagnostics_channel";
+import ChatLoader from "../models/ChatLoaders";
+import ChatMessages from "../models/ChatMessages";
+import {ChatMessagesModel} from "../types/index";
+
 class TeacherHelper {
   // Метод для создания нового учителя
   static async createTeacher(data: {
@@ -295,6 +298,326 @@ class TeacherHelper {
         }
     }
 
-}
+    //find chat Loader by source
+
+    static async findChatLoaderBySource(source: string): Promise<ChatLoader | null> {
+        try {
+        const chatLoader = await ChatLoader.findOne({
+            where: {
+            source: source
+            },
+            raw: true
+        });
+        return chatLoader;
+        } catch (error) {
+        console.error('Error fetching chat loader:', error);
+        throw error;
+        }
+    }
+
+    //update Chat Loader by source (serverId, orderNumber)
+
+    static async updateChatLoaderBySource(source: string, serverId: string, orderNumber: number): Promise<ChatLoader | null> {
+        try {
+     
+          //update chat loader where source = source
+        const chatLoader = await ChatLoader.findOne({
+            where: {
+            source: source
+            }
+        });
+        if (!chatLoader) {
+            console.log('Chat Loader not found');
+            return null;
+        }
+        await chatLoader.update({
+            serverId: serverId,
+            orderNumber: orderNumber
+        });
+
+        console.log('Chat Loader updated:', chatLoader.toJSON());
+        return chatLoader;
+        } catch (error) {
+        console.error('Error updating chat loader:', error);
+        throw error;
+        }
+    }
+
+    //create Chat Messages use ChatMessagesModel[] array (and update chat loader)
+    static async createChatMessages(chatMessages: ChatMessagesModel[], source: string) {
+        try {
+        const chatLoader = await TeacherHelper.findChatLoaderBySource(source);
+        if (!chatLoader) {
+            console.log('Chat Loader not found');
+            return null;
+        }
+        let newChatMessagesData: any[] = [];
+        for (let i = 0; i < chatMessages.length; i++) {
+            newChatMessagesData.push({
+            messageText: chatMessages[i].messageText,
+            teacherId: chatMessages[i].teacherId,
+            orderNumber: chatMessages[i].orderNumber,
+            customerId: chatMessages[i].customerId,
+            messageType: chatMessages[i].messageType,
+            attachemnt: chatMessages[i].attachemnt,
+            isActive: true,
+            serverDate: new Date(),
+            additionalInfo: chatMessages[i].additionalInfo,
+            source: source,
+            serverId : chatMessages[i].serverId,
+            });
+        }
+        const newChatMessages = await ChatMessages.bulkCreate(newChatMessagesData);
+        console.log('New chat messages created:', newChatMessages.map((item) => item.toJSON()));
+        await TeacherHelper.updateChatLoaderBySource(source, chatMessages[chatMessages.length - 1].serverId, chatMessages[chatMessages.length - 1].orderNumber);
+        return newChatMessages;
+        } catch (error) {
+        console.error('Error creating chat messages:', error);
+        throw error;
+        }
+    }
+
+
+    //find teachers by customer id and source 
+    static async findTeacherByCustomerIdAndSource(customerId: string, source: string): Promise<TeacherCustomer | null> {
+        try {
+        const teacherCustomer = await TeacherCustomer.findOne({
+            where: {
+            customerId : customerId,
+            source: source,
+            isActive: true
+            }
+        });
+        if (!teacherCustomer) {
+            console.log('Teacher Customer not found');
+            return null;
+        }
+        return teacherCustomer;
+       
+        } catch (error) {
+        console.error('Error fetching teachers:', error);
+        throw error;
+        }
+    }
+
+    //find all teachers customer by customerIds array and source
+    static async findTeacherCustomersByCustomerIdsAndSource(customerIds: string[], source: string): Promise<TeacherCustomer[]> {
+        try {
+        const teacherCustomers = await TeacherCustomer.findAll({
+            where: {
+            customerId: { [Op.in]: customerIds },
+            source: source,
+            isActive: true
+            },
+            raw: true
+        });
+        return teacherCustomers;
+        } catch (error) {
+        console.error('Error fetching teachers:', error);
+        throw error;
+        }
+    }
+    //find ChatMessages by teacherId and customerId and source
+
+    static async findChatMessagesByTeacherIdAndCustomerIdAndSource(teacherId: number, customerId: string): Promise<ChatMessages[]> {
+        try {
+        const chatMessages = await ChatMessages.findAll({
+            where: {
+            teacherId: teacherId,
+            customerId: customerId,
+            },
+            raw: true
+        });
+        return chatMessages;
+        } catch (error) {
+        console.error('Error fetching chat messages:', error);
+        throw error;
+        }
+    }
+
+
+    //create ChatMessages use teacherId, customerId, messageText, messageType, source
+    static async createChatMessage(teacherId: number, customerId: string, messageText: string, messageType: string, source: string, sender: string ) {
+        try {
+        const newChatMessage = await ChatMessages.create({
+            messageText,
+            teacherId,
+            customerId,
+            messageType,
+            source,
+            isActive: true,
+            serverDate: new Date(),
+            sender: sender,
+            serverId: '0'
+        });
+        console.log('New chat message created:', newChatMessage.toJSON());
+        return newChatMessage;
+        } 
+        catch (error) {
+        console.error('Error creating chat message:', error);
+        return null;
+        }
+    }
+
+    
+
+    //find teacher customer (with teacher info - teacher name id) by chatId
+
+    
+    static async findTeacherCustomerByChatId(chatId: string): Promise<TeacherInfoModel | null> {
+        try {
+        const teacherCustomer = await TeacherCustomer.findOne({
+            where: 
+            {
+            chatId: chatId,
+            isActive: true
+            },
+            raw: true
+        });
+        if (!teacherCustomer) {
+            console.log('Teacher Customer not found');
+            return null;
+        }
+        //find teacher by teacherId
+        const teacher = await TeacherHelper.getTeacherById(teacherCustomer.teacherId);
+
+        if (!teacher) {
+            console.log('Teacher not found');
+            return null;
+        }
+        let resultInfo: TeacherInfoModel = {
+            teacherId: teacher.id,
+            teacherName: teacher.name,
+            teacherEmail: teacher.email ?? '',
+            customerName: teacherCustomer.customerName,
+            customerEmails: teacherCustomer.customerEmails ?? [],
+            customerPhones: teacherCustomer.customerPhones ?? [],
+            customerId: teacherCustomer.customerId,
+            chatInfo: teacherCustomer.chatInfo,
+            source: teacherCustomer.source,
+            chatId: teacherCustomer.chatId,
+            realChatId: teacherCustomer.realChatId
+        }
+
+        return resultInfo;
+        } catch (error) {
+        console.error('Error fetching teacher customer:', error);
+          return null;
+        }
+    } 
+
+    ///find teacher customer (with teacher info - teacher name id) by realChatId
+    static async findTeacherCustomerByRealChatId(realChatId: string): Promise<TeacherInfoModel | null> {
+        try {
+        const teacherCustomer = await TeacherCustomer.findOne({
+            where: 
+            {
+            realChatId: realChatId,
+            isActive: true
+            },
+            raw: true
+        });
+        if (!teacherCustomer) {
+            console.log('Teacher Customer not found');
+            return null;
+        }
+        //find teacher by teacherId
+        const teacher = await TeacherHelper.getTeacherById(teacherCustomer.teacherId);
+
+        if (!teacher) {
+            console.log('Teacher not found');
+            return null;
+        }
+        let resultInfo: TeacherInfoModel = {
+            teacherId: teacher.id,
+            teacherName: teacher.name,
+            teacherEmail: teacher.email ?? '',
+            customerName: teacherCustomer.customerName,
+            customerEmails: teacherCustomer.customerEmails ?? [],
+            customerPhones: teacherCustomer.customerPhones ?? [],
+            customerId: teacherCustomer.customerId,
+            chatInfo: teacherCustomer.chatInfo,
+            source: teacherCustomer.source,
+            chatId: teacherCustomer.chatId,
+            realChatId: teacherCustomer.realChatId
+        }
+
+        return resultInfo;
+        } catch (error) {
+        console.error('Error fetching teacher customer:', error);
+          return null;
+        }
+    }
+
+    //upudate realChatId   by customerId and teacherId 
+    static async updateRealChatIdByCustomerIdAndTeacherId(customerId: string, teacherId: number, realChatId: string): Promise<TeacherCustomer | null> {
+        try {
+        const teacherCustomer = await TeacherCustomer.findOne({
+            where: {
+            customerId: customerId,
+            teacherId: teacherId,
+            isActive: true
+            }
+        });
+        if (!teacherCustomer) {
+            console.log('Teacher Customer not found');
+            return null;
+        }
+        await teacherCustomer.update({
+            realChatId: realChatId
+        });
+        console.log('Teacher Customer updated:', teacherCustomer.toJSON());
+        return teacherCustomer;
+        } catch (error) {
+        console.error('Error updating teacher customer:', error);
+        throw error;
+        }
+    }
+
+    //find teacher customer (teacher info TeacherInfoModel) by customerId and teacherId
+    static async findTeacherCustomerByCustomerIdAndTeacherId(customerId: string, teacherId: number): Promise<TeacherInfoModel | null> {
+        try {
+        const teacherCustomer = await TeacherCustomer.findOne({
+            where: {
+            customerId: customerId,
+            teacherId: teacherId,
+            isActive: true
+            },
+            raw: true
+        });
+        if (!teacherCustomer) {
+            console.log('Teacher Customer not found');
+            return null;
+        }
+        //find teacher by teacherId
+        const teacher = await TeacherHelper.getTeacherById(teacherCustomer.teacherId);
+
+        if (!teacher) {
+            console.log('Teacher not found');
+            return null;
+        }
+        let resultInfo: TeacherInfoModel = {
+            teacherId: teacher.id,
+            teacherName: teacher.name,
+            teacherEmail: teacher.email ?? '',
+            customerName: teacherCustomer.customerName,
+            customerEmails: teacherCustomer.customerEmails ?? [],
+            customerPhones: teacherCustomer.customerPhones ?? [],
+            customerId: teacherCustomer.customerId,
+            chatInfo: teacherCustomer.chatInfo,
+            source: teacherCustomer.source,
+            chatId: teacherCustomer.chatId,
+            realChatId: teacherCustomer.realChatId
+        }
+
+        return resultInfo;
+        } catch (error) {
+        console.error('Error fetching teacher customer:', error);
+          return null;
+        }
+    }
+
+  }
+
 
 export default TeacherHelper;

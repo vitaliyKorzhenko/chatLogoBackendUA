@@ -426,14 +426,13 @@ class TeacherHelper {
         });
     }
     //find ChatMessages by teacherId and customerId and source
-    static findChatMessagesByTeacherIdAndCustomerIdAndSource(teacherId_1, customerId_1) {
-        return __awaiter(this, arguments, void 0, function* (teacherId, customerId, source = 'ua') {
+    static findChatMessagesByTeacherIdAndCustomerIdAndSource(teacherId, customerId) {
+        return __awaiter(this, void 0, void 0, function* () {
             try {
                 const chatMessages = yield ChatMessages_1.default.findAll({
                     where: {
                         teacherId: teacherId,
                         customerId: customerId,
-                        source: source
                     },
                     raw: true
                 });
@@ -446,8 +445,8 @@ class TeacherHelper {
         });
     }
     //create ChatMessages use teacherId, customerId, messageText, messageType, source
-    static createChatMessageForTeacher(teacherId_1, customerId_1, messageText_1, messageType_1) {
-        return __awaiter(this, arguments, void 0, function* (teacherId, customerId, messageText, messageType, source = 'ua') {
+    static createChatMessage(teacherId, customerId, messageText, messageType, source, sender) {
+        return __awaiter(this, void 0, void 0, function* () {
             try {
                 const newChatMessage = yield ChatMessages_1.default.create({
                     messageText,
@@ -457,7 +456,7 @@ class TeacherHelper {
                     source,
                     isActive: true,
                     serverDate: new Date(),
-                    inBound: false,
+                    sender: sender,
                     serverId: '0'
                 });
                 console.log('New chat message created:', newChatMessage.toJSON());
@@ -465,7 +464,164 @@ class TeacherHelper {
             }
             catch (error) {
                 console.error('Error creating chat message:', error);
+                return null;
+            }
+        });
+    }
+    //find teacher customer (with teacher info - teacher name id) by chatId
+    static findTeacherCustomerByChatId(chatId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a, _b, _c;
+            try {
+                const teacherCustomer = yield Teacher_Customer_1.default.findOne({
+                    where: {
+                        chatId: chatId,
+                        isActive: true
+                    },
+                    raw: true
+                });
+                if (!teacherCustomer) {
+                    console.log('Teacher Customer not found');
+                    return null;
+                }
+                //find teacher by teacherId
+                const teacher = yield TeacherHelper.getTeacherById(teacherCustomer.teacherId);
+                if (!teacher) {
+                    console.log('Teacher not found');
+                    return null;
+                }
+                let resultInfo = {
+                    teacherId: teacher.id,
+                    teacherName: teacher.name,
+                    teacherEmail: (_a = teacher.email) !== null && _a !== void 0 ? _a : '',
+                    customerName: teacherCustomer.customerName,
+                    customerEmails: (_b = teacherCustomer.customerEmails) !== null && _b !== void 0 ? _b : [],
+                    customerPhones: (_c = teacherCustomer.customerPhones) !== null && _c !== void 0 ? _c : [],
+                    customerId: teacherCustomer.customerId,
+                    chatInfo: teacherCustomer.chatInfo,
+                    source: teacherCustomer.source,
+                    chatId: teacherCustomer.chatId,
+                    realChatId: teacherCustomer.realChatId
+                };
+                return resultInfo;
+            }
+            catch (error) {
+                console.error('Error fetching teacher customer:', error);
+                return null;
+            }
+        });
+    }
+    ///find teacher customer (with teacher info - teacher name id) by realChatId
+    static findTeacherCustomerByRealChatId(realChatId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a, _b, _c;
+            try {
+                const teacherCustomer = yield Teacher_Customer_1.default.findOne({
+                    where: {
+                        realChatId: realChatId,
+                        isActive: true
+                    },
+                    raw: true
+                });
+                if (!teacherCustomer) {
+                    console.log('Teacher Customer not found');
+                    return null;
+                }
+                //find teacher by teacherId
+                const teacher = yield TeacherHelper.getTeacherById(teacherCustomer.teacherId);
+                if (!teacher) {
+                    console.log('Teacher not found');
+                    return null;
+                }
+                let resultInfo = {
+                    teacherId: teacher.id,
+                    teacherName: teacher.name,
+                    teacherEmail: (_a = teacher.email) !== null && _a !== void 0 ? _a : '',
+                    customerName: teacherCustomer.customerName,
+                    customerEmails: (_b = teacherCustomer.customerEmails) !== null && _b !== void 0 ? _b : [],
+                    customerPhones: (_c = teacherCustomer.customerPhones) !== null && _c !== void 0 ? _c : [],
+                    customerId: teacherCustomer.customerId,
+                    chatInfo: teacherCustomer.chatInfo,
+                    source: teacherCustomer.source,
+                    chatId: teacherCustomer.chatId,
+                    realChatId: teacherCustomer.realChatId
+                };
+                return resultInfo;
+            }
+            catch (error) {
+                console.error('Error fetching teacher customer:', error);
+                return null;
+            }
+        });
+    }
+    //upudate realChatId   by customerId and teacherId 
+    static updateRealChatIdByCustomerIdAndTeacherId(customerId, teacherId, realChatId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const teacherCustomer = yield Teacher_Customer_1.default.findOne({
+                    where: {
+                        customerId: customerId,
+                        teacherId: teacherId,
+                        isActive: true
+                    }
+                });
+                if (!teacherCustomer) {
+                    console.log('Teacher Customer not found');
+                    return null;
+                }
+                yield teacherCustomer.update({
+                    realChatId: realChatId
+                });
+                console.log('Teacher Customer updated:', teacherCustomer.toJSON());
+                return teacherCustomer;
+            }
+            catch (error) {
+                console.error('Error updating teacher customer:', error);
                 throw error;
+            }
+        });
+    }
+    //find teacher customer (teacher info TeacherInfoModel) by customerId and teacherId
+    static findTeacherCustomerByCustomerIdAndTeacherId(customerId, teacherId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a, _b, _c;
+            try {
+                const teacherCustomer = yield Teacher_Customer_1.default.findOne({
+                    where: {
+                        customerId: customerId,
+                        teacherId: teacherId,
+                        isActive: true
+                    },
+                    raw: true
+                });
+                if (!teacherCustomer) {
+                    console.log('Teacher Customer not found');
+                    return null;
+                }
+                //find teacher by teacherId
+                const teacher = yield TeacherHelper.getTeacherById(teacherCustomer.teacherId);
+                if (!teacher) {
+                    console.log('Teacher not found');
+                    return null;
+                }
+                let resultInfo = {
+                    teacherId: teacher.id,
+                    teacherName: teacher.name,
+                    teacherEmail: (_a = teacher.email) !== null && _a !== void 0 ? _a : '',
+                    customerName: teacherCustomer.customerName,
+                    customerEmails: (_b = teacherCustomer.customerEmails) !== null && _b !== void 0 ? _b : [],
+                    customerPhones: (_c = teacherCustomer.customerPhones) !== null && _c !== void 0 ? _c : [],
+                    customerId: teacherCustomer.customerId,
+                    chatInfo: teacherCustomer.chatInfo,
+                    source: teacherCustomer.source,
+                    chatId: teacherCustomer.chatId,
+                    realChatId: teacherCustomer.realChatId
+                };
+                return resultInfo;
+            }
+            catch (error) {
+                console.error('Error fetching teacher customer:', error);
+                return null;
             }
         });
     }

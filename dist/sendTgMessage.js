@@ -15,11 +15,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.testChatId = exports.mainBotToken = void 0;
 exports.sendMessage = sendMessage;
 const axios_1 = __importDefault(require("axios"));
-exports.mainBotToken = '1020304081:AAFQvwaohMkRpQhURXVDavdxvHOp59ur1fQ';
+exports.mainBotToken = '7065191329:AAFSKQ_PMyGS8CgXa0w6Ic4FCY7MoKRqZWg';
 exports.testChatId = '313757694';
-function sendMessage(botToken, chatId, message) {
+function sendMessage(chatId, message) {
     return __awaiter(this, void 0, void 0, function* () {
-        const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+        const url = `https://api.telegram.org/bot${exports.mainBotToken}/sendMessage`;
         try {
             const response = yield axios_1.default.post(url, {
                 chat_id: chatId,
