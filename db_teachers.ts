@@ -1,7 +1,7 @@
 import mysql, { Pool, RowDataPacket } from 'mysql2';
 import { ServerTeacher, TeacherCustomerModel, TeacherIdModel } from './types';
 import TeacherHelper from './helpers/teacherHelper';
-import { alfa_chats, alfaCalendarsTable, alfaCustomersTable } from './db_pools';
+import { alfa_chats, alfaCalendarsTable, alfaCustomerAlfaChat, alfaCustomersTable } from './db_pools';
 import { env } from 'process';
 // MySQL connection pool setup
 require('dotenv').config();
@@ -376,7 +376,8 @@ export async function findTeacherCustomerWithChats(pool: Pool, source: string): 
                        chat.channel_id, chat.chat_id, chat.tracking_code
                 FROM ${alfaCalendarsTable} AS ac
                 JOIN ${alfaCustomersTable} AS cust ON ac.customer_id = cust.id
-                LEFT JOIN ${alfa_chats} AS chat ON cust.id = chat.alfa_customer_id
+                LEFT JOIN ${alfaCustomerAlfaChat} AS acac ON ac.customer_id = acac.alfa_customer_id
+                LEFT JOIN ${alfa_chats} AS chat ON acac.alfa_chat_id = chat.id
                 WHERE ac.teacher_id IN (${placeholders})
                 AND cust.study_status_id = 1 AND cust.is_study = 1
                 LIMIT ${limit} OFFSET ${offset}

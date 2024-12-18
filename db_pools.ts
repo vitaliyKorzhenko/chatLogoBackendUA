@@ -10,6 +10,8 @@ export const alfaCalendarsTable = 'alfa_calendars';
 
 export const alfaCustomersTable = 'alfa_customers';
 
+export const alfaCustomerAlfaChat = 'alfa_customer_alfa_chat';
+
 export const alfa_messages = 'alfa_messages';
 
 export const alfa_chats = 'alfa_chats';
@@ -39,8 +41,21 @@ const uaConfig = {
     user: process.env.DB_USER_UA,
     password: process.env.DB_PASSWORD_UA,
     database: process.env.DB_NAME_UA,
+   // port: 25060
 };
 export const uaPool: Pool = mysql.createPool(uaConfig);
+
+
+
+const newUAConfig = {
+    host: process.env.DB_NEW_HOST_UA,
+    user: process.env.DB_NEW_USER_UA,
+    password: process.env.DB_NEW_PASSWORD_UA,
+    database: process.env.DB_NEW_NAME_UA,
+    port: 25060
+};
+export const newUAPool: Pool = mysql.createPool(newUAConfig);
+
 
 //pl pool (for pl database)
 const plConfig = {

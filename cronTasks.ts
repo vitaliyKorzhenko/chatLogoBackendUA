@@ -2,11 +2,10 @@
 import cron from 'node-cron';
 import TeacherHelper from './helpers/teacherHelper';
 import { fetchAllTeachers, findTeacherCustomerWithChats } from './db_teachers';
-import { mainPool, plPool, testMainPool, uaPool } from './db_pools';
 import { ServerTeacher, TeacherCustomerModel } from './types';
 import { Pool } from 'mysql2/typings/mysql/lib/Pool';
 
-async function syncTeachers (pool: Pool, source: string) {
+export async function syncTeachers (pool: Pool, source: string) {
     try {
         const teachers: ServerTeacher[] = await fetchAllTeachers(pool);
         console.log('All Teachers:', teachers.length);
@@ -14,8 +13,8 @@ async function syncTeachers (pool: Pool, source: string) {
         console.log('First Teacher:', teachers[0]);
     
         try {
-            let createTeachers = await TeacherHelper.syncTeachers(teachers, source);
-            console.log('Teachers created:', createTeachers.length);
+           // let createTeachers = await TeacherHelper.syncTeachers(teachers, source);
+            //console.log('Teachers created:', createTeachers.length);
             
             
         } catch (error) {
@@ -36,7 +35,7 @@ export async function findTeachersCustomer(pool: Pool, source: string) {
     const teacherCustomers:TeacherCustomerModel[]  | null= await findTeacherCustomerWithChats(pool, source);
    
     if (teacherCustomers) {
-      console.log('Teacher Customer:', teacherCustomers[0]);
+      console.log('Teacher Customer FIND!:', teacherCustomers[0]);
       await TeacherHelper.createTeacherCustomerIfNotExist(teacherCustomers, source);
     }
   } catch (error) {

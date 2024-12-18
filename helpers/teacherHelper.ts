@@ -1,4 +1,4 @@
-import { Op } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import Teacher from "../models/Teacher";
 import { ServerTeacher, TeacherCustomerModel, TeacherIdModel, TeacherInfoModel, TeacherInfoWithCustomer } from "../types";
 import TeacherCustomer from "../models/Teacher_Customer";
@@ -205,56 +205,67 @@ class TeacherHelper {
     }
 
 
-    //create if not exist TeacherCustomer use 
+    
     static async createTeacherCustomerIfNotExist(teacherCustomer: TeacherCustomerModel[], source: string) {
         try {
-          //get teachers for source
-        const teachers = await TeacherHelper.findTeachersBySource(source);
-        const teacherIds = teachers.map((teacher) => teacher.id);
-
-        const existingTeacherCustomers = await TeacherCustomer.findAll({
-            where: {
-            teacherId: { [Op.in]: teacherIds },
+            // Get teachers for source
+            const teachers = await TeacherHelper.findTeachersBySource(source);
+            const teacherIds = teachers.map((teacher) => teacher.id);
+    
+            // Fetch existing teacher customers
+            const existingTeacherCustomers = await TeacherCustomer.findAll({
+                where: {
+                    teacherId: { [Op.in]: teacherIds },
+                },
+            });
+    
+            let newTeacherCustomerData: any[] = [];
+    
+            for (let i = 0; i < teacherCustomer.length; i++) {
+                let teacher = teachers.find((item) => item.serverId == teacherCustomer[i].teacherServerId.toString());
+                if (teacher) {
+                    let currentTeacherCustomer = existingTeacherCustomers.find(
+                        (item) =>
+                            item.customerId == teacherCustomer[i].customerId.toString() &&
+                            item.teacherId == teacher.id
+                    );
+    
+                    if (!currentTeacherCustomer) {
+                        newTeacherCustomerData.push({
+                            teacherId: teacher.id,
+                            customerId: teacherCustomer[i].customerId,
+                            customerName: teacherCustomer[i].customerName,
+                            customerPhones: teacherCustomer[i].customerPhones?.length
+                                ? teacherCustomer[i].customerPhones
+                                : Sequelize.literal('ARRAY[]::text[]'), // Handle empty array
+                            customerEmails: teacherCustomer[i].customerEmails?.length
+                                ? teacherCustomer[i].customerEmails
+                                : Sequelize.literal('ARRAY[]::text[]'), // Handle empty array
+                            chatInfo: teacherCustomer[i].chatInfo,
+                            isActive: true,
+                            source: source,
+                            channelId: teacherCustomer[i].channelId,
+                            chatId: teacherCustomer[i].chatId,
+                            trackingCode: teacherCustomer[i].trackingCode,
+                        });
+                    }
+                }
             }
-        });
-
-  
-
-        let newTeacherCustomerData: any[] = [];
-
-        for (let i = 0; i < teacherCustomer.length; i++) {
-            let teacher = teachers.find((item) => item.serverId == teacherCustomer[i].teacherServerId.toString());
-            if (teacher) {
-              let currentTeacherCustomer = existingTeacherCustomers.find((item) => item.customerId == teacherCustomer[i].customerId.toString() && item.teacherId == teacher.id);
-              if (!currentTeacherCustomer) {
-              newTeacherCustomerData.push({
-                teacherId: teacher.id,
-                customerId: teacherCustomer[i].customerId,
-                customerName: teacherCustomer[i].customerName,
-                customerPhones: teacherCustomer[i].customerPhones,
-                customerEmails: teacherCustomer[i].customerEmails,
-                chatInfo: teacherCustomer[i].chatInfo,
-                isActive: true,
-                source: source,
-                channelId: teacherCustomer[i].channelId,
-                chatId: teacherCustomer[i].chatId,
-                trackingCode: teacherCustomer[i].trackingCode
-                
-              });
-            }
-            }
-        }
-        console.log('NEW CUSTOMER LENGTH', newTeacherCustomerData.length);
-        console.log('First New Teacher Customer:', newTeacherCustomerData[0]);
-        const newTeacherCustomers = await TeacherCustomer.bulkCreate(newTeacherCustomerData);
-        console.log('new First Teacher Customer:', newTeacherCustomers[0]);
-       // console.log('New teacher customers created:', newTeacherCustomers.map((item) => item.toJSON()));
-        return [...existingTeacherCustomers, ...newTeacherCustomers];
+    
+            console.log('NEW CUSTOMER LENGTH', newTeacherCustomerData.length);
+            console.log('First New Teacher Customer:', newTeacherCustomerData[0]);
+    
+            // Bulk create new teacher customers
+            const newTeacherCustomers = await TeacherCustomer.bulkCreate(newTeacherCustomerData);
+            console.log('new First Teacher Customer:', newTeacherCustomers[0]);
+    
+            return [...existingTeacherCustomers, ...newTeacherCustomers];
         } catch (error) {
-        console.error('Error creating teacher customers:', error);
-        throw error;
+            console.error('Error creating teacher customers:', error);
+            throw error;
         }
     }
+    
 
     //create teacher info with teacher customers (by email teacher)
 
@@ -286,8 +297,8 @@ class TeacherHelper {
             teacherInfoWithCustomer.customers.push({
               customerId: Number(item.customerId),
               customerName: item.customerName,
-              customerEmails: item.customerEmails?? [],
-              customerPhones: item.customerPhones ?? [],
+              customerEmails: item.customerEmails ? [item.customerEmails]: [],
+              customerPhones: item.customerPhones ? [item.customerPhones] : [],
               chatInfo: ''
             });
         });
@@ -490,8 +501,8 @@ class TeacherHelper {
             teacherName: teacher.name,
             teacherEmail: teacher.email ?? '',
             customerName: teacherCustomer.customerName,
-            customerEmails: teacherCustomer.customerEmails ?? [],
-            customerPhones: teacherCustomer.customerPhones ?? [],
+            customerEmails: teacherCustomer.customerEmails ? [teacherCustomer.customerEmails]: [],
+            customerPhones: teacherCustomer.customerPhones ? [teacherCustomer.customerPhones] : [],
             customerId: teacherCustomer.customerId,
             chatInfo: teacherCustomer.chatInfo,
             source: teacherCustomer.source,
@@ -533,8 +544,8 @@ class TeacherHelper {
             teacherName: teacher.name,
             teacherEmail: teacher.email ?? '',
             customerName: teacherCustomer.customerName,
-            customerEmails: teacherCustomer.customerEmails ?? [],
-            customerPhones: teacherCustomer.customerPhones ?? [],
+            customerEmails: teacherCustomer.customerEmails ? [teacherCustomer.customerEmails]: [],
+            customerPhones: teacherCustomer.customerPhones ? [teacherCustomer.customerPhones] : [],
             customerId: teacherCustomer.customerId,
             chatInfo: teacherCustomer.chatInfo,
             source: teacherCustomer.source,
@@ -601,8 +612,8 @@ class TeacherHelper {
             teacherName: teacher.name,
             teacherEmail: teacher.email ?? '',
             customerName: teacherCustomer.customerName,
-            customerEmails: teacherCustomer.customerEmails ?? [],
-            customerPhones: teacherCustomer.customerPhones ?? [],
+            customerEmails: teacherCustomer.customerEmails ? [teacherCustomer.customerEmails]: [],
+            customerPhones: teacherCustomer.customerPhones ? [teacherCustomer.customerPhones] : [],
             customerId: teacherCustomer.customerId,
             chatInfo: teacherCustomer.chatInfo,
             source: teacherCustomer.source,
@@ -617,6 +628,68 @@ class TeacherHelper {
         }
     }
 
+
+
+    //find teacher customer by phone (teacher info TeacherInfoModel)
+    
+    static async findTeacherCustomerByPhone(phone: string): Promise<TeacherInfoModel | null> {
+        try {
+            // Нормализуем телефон: убираем символ '+' и любые нечисловые символы
+            const normalizedPhone = phone.replace(/\D/g, ''); 
+        
+            console.log(`Normalized phone for search: ${normalizedPhone}`);
+        
+            // Ищем клиента в базе данных
+            const teacherCustomer = await TeacherCustomer.findOne({
+                where: {
+                    [Op.and]: [
+                        Sequelize.literal(
+                            `'${normalizedPhone}' = ANY(string_to_array("customerPhones", ','))`
+                        ),
+                        { isActive: true }
+                    ]
+                },
+                raw: true
+            });
+        
+            if (!teacherCustomer) {
+                console.log('Teacher Customer not found');
+                return null;
+            }
+        
+            // Ищем учителя по teacherId
+            const teacher = await TeacherHelper.getTeacherById(teacherCustomer.teacherId);
+        
+            if (!teacher) {
+                console.log('Teacher not found');
+                return null;
+            }
+        
+            // Собираем итоговую информацию
+            const resultInfo: TeacherInfoModel = {
+                teacherId: teacher.id,
+                teacherName: teacher.name,
+                teacherEmail: teacher.email ?? '',
+                customerName: teacherCustomer.customerName,
+                customerEmails: teacherCustomer.customerEmails ? [teacherCustomer.customerEmails] : [],
+                customerPhones: teacherCustomer.customerPhones ? [teacherCustomer.customerPhones] : [],
+                customerId: teacherCustomer.customerId,
+                chatInfo: teacherCustomer.chatInfo,
+                source: teacherCustomer.source,
+                chatId: teacherCustomer.chatId,
+                realChatId: teacherCustomer.realChatId
+            };
+        
+            return resultInfo;
+    
+        } catch (error) {
+            console.error('Error fetching teacher customer:', error);
+            return null;
+        }
+    }
+    
+    
+    
   }
 
 

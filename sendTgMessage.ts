@@ -1,7 +1,9 @@
 import axios from 'axios';
 
-export const mainBotToken = '7065191329:AAFSKQ_PMyGS8CgXa0w6Ic4FCY7MoKRqZWg';
+const isProd = false;
 
+//use env for bot token
+export const mainBotToken  =  process.env.TG_BOT_TOKEN;
 export const testChatId  = '313757694'
 
 export async function sendMessage(chatId: string, message: string) {

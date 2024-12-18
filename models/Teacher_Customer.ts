@@ -69,8 +69,8 @@ class TeacherCustomer extends Model {
   public teacherId!: number;
   public customerId!: string;
   public customerName!: string;
-  public customerPhones!: string[] | null;
-  public customerEmails!: string[] | null;
+  public customerPhones!: string | null;
+  public customerEmails!: string| null;
   public chatInfo!: string;
   public channelId!: string;
   public chatId!: string;
@@ -101,11 +101,11 @@ TeacherCustomer.init(
       allowNull: false,
     },
     customerPhones: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
+      type:  DataTypes.STRING,
       allowNull: true,
     },
     customerEmails: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
+      type:  DataTypes.STRING,
       allowNull: true,
     },
     chatInfo: {
