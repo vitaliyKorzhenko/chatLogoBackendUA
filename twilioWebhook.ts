@@ -4,8 +4,8 @@ import TeacherHelper from './helpers/teacherHelper';
 import { TeacherIdModel, TeacherInfoModel } from './types';
 
 // Twilio credentials
-const accountSid = 'AC69ce51ca2230d7b34fba1a169b22ceed';
-const authToken = '3b06ea7739c404bbe4092707910f9190';
+const accountSid = process.env.TWILIO_ACCOUNT_SID || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+const authToken = process.env.TWILIO_AUTH_TOKEN || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
 const client = new Twilio(accountSid, authToken);
 
 const router = Router();
