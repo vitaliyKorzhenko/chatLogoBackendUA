@@ -89,11 +89,11 @@ TeacherCustomer.init({
         allowNull: false,
     },
     customerPhones: {
-        type: sequelize_1.DataTypes.ARRAY(sequelize_1.DataTypes.STRING),
+        type: sequelize_1.DataTypes.STRING,
         allowNull: true,
     },
     customerEmails: {
-        type: sequelize_1.DataTypes.ARRAY(sequelize_1.DataTypes.STRING),
+        type: sequelize_1.DataTypes.STRING,
         allowNull: true,
     },
     chatInfo: {

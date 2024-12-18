@@ -15,7 +15,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.testChatId = exports.mainBotToken = void 0;
 exports.sendMessage = sendMessage;
 const axios_1 = __importDefault(require("axios"));
-exports.mainBotToken = '7065191329:AAFSKQ_PMyGS8CgXa0w6Ic4FCY7MoKRqZWg';
+const isProd = false;
+//use env for bot token
+exports.mainBotToken = process.env.TG_BOT_TOKEN;
 exports.testChatId = '313757694';
 function sendMessage(chatId, message) {
     return __awaiter(this, void 0, void 0, function* () {

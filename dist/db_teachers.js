@@ -359,7 +359,8 @@ function findTeacherCustomerWithChats(pool, source) {
                        chat.channel_id, chat.chat_id, chat.tracking_code
                 FROM ${db_pools_1.alfaCalendarsTable} AS ac
                 JOIN ${db_pools_1.alfaCustomersTable} AS cust ON ac.customer_id = cust.id
-                LEFT JOIN ${db_pools_1.alfa_chats} AS chat ON cust.id = chat.alfa_customer_id
+                LEFT JOIN ${db_pools_1.alfaCustomerAlfaChat} AS acac ON ac.customer_id = acac.alfa_customer_id
+                LEFT JOIN ${db_pools_1.alfa_chats} AS chat ON acac.alfa_chat_id = chat.id
                 WHERE ac.teacher_id IN (${placeholders})
                 AND cust.study_status_id = 1 AND cust.is_study = 1
                 LIMIT ${limit} OFFSET ${offset}

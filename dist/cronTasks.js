@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.startAllCronJobs = void 0;
+exports.syncTeachers = syncTeachers;
 exports.findTeachersCustomer = findTeachersCustomer;
 // src/crons/myCronTasks.ts
 const node_cron_1 = __importDefault(require("node-cron"));
@@ -26,8 +27,8 @@ function syncTeachers(pool, source) {
             if (teachers.length > 0) {
                 console.log('First Teacher:', teachers[0]);
                 try {
-                    let createTeachers = yield teacherHelper_1.default.syncTeachers(teachers, source);
-                    console.log('Teachers created:', createTeachers.length);
+                    // let createTeachers = await TeacherHelper.syncTeachers(teachers, source);
+                    //console.log('Teachers created:', createTeachers.length);
                 }
                 catch (error) {
                     console.error('Error creating teachers:', error);
@@ -47,7 +48,7 @@ function findTeachersCustomer(pool, source) {
         try {
             const teacherCustomers = yield (0, db_teachers_1.findTeacherCustomerWithChats)(pool, source);
             if (teacherCustomers) {
-                console.log('Teacher Customer:', teacherCustomers[0]);
+                console.log('Teacher Customer FIND!:', teacherCustomers[0]);
                 yield teacherHelper_1.default.createTeacherCustomerIfNotExist(teacherCustomers, source);
             }
         }

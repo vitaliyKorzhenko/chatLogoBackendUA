@@ -211,45 +211,51 @@ class TeacherHelper {
             }
         });
     }
-    //create if not exist TeacherCustomer use 
     static createTeacherCustomerIfNotExist(teacherCustomer, source) {
         return __awaiter(this, void 0, void 0, function* () {
+            var _a, _b;
             try {
-                //get teachers for source
+                // Get teachers for source
                 const teachers = yield TeacherHelper.findTeachersBySource(source);
                 const teacherIds = teachers.map((teacher) => teacher.id);
+                // Fetch existing teacher customers
                 const existingTeacherCustomers = yield Teacher_Customer_1.default.findAll({
                     where: {
                         teacherId: { [sequelize_1.Op.in]: teacherIds },
-                    }
+                    },
                 });
                 let newTeacherCustomerData = [];
                 for (let i = 0; i < teacherCustomer.length; i++) {
                     let teacher = teachers.find((item) => item.serverId == teacherCustomer[i].teacherServerId.toString());
                     if (teacher) {
-                        let currentTeacherCustomer = existingTeacherCustomers.find((item) => item.customerId == teacherCustomer[i].customerId.toString() && item.teacherId == teacher.id);
+                        let currentTeacherCustomer = existingTeacherCustomers.find((item) => item.customerId == teacherCustomer[i].customerId.toString() &&
+                            item.teacherId == teacher.id);
                         if (!currentTeacherCustomer) {
                             newTeacherCustomerData.push({
                                 teacherId: teacher.id,
                                 customerId: teacherCustomer[i].customerId,
                                 customerName: teacherCustomer[i].customerName,
-                                customerPhones: teacherCustomer[i].customerPhones,
-                                customerEmails: teacherCustomer[i].customerEmails,
+                                customerPhones: ((_a = teacherCustomer[i].customerPhones) === null || _a === void 0 ? void 0 : _a.length)
+                                    ? teacherCustomer[i].customerPhones
+                                    : sequelize_1.Sequelize.literal('ARRAY[]::text[]'), // Handle empty array
+                                customerEmails: ((_b = teacherCustomer[i].customerEmails) === null || _b === void 0 ? void 0 : _b.length)
+                                    ? teacherCustomer[i].customerEmails
+                                    : sequelize_1.Sequelize.literal('ARRAY[]::text[]'), // Handle empty array
                                 chatInfo: teacherCustomer[i].chatInfo,
                                 isActive: true,
                                 source: source,
                                 channelId: teacherCustomer[i].channelId,
                                 chatId: teacherCustomer[i].chatId,
-                                trackingCode: teacherCustomer[i].trackingCode
+                                trackingCode: teacherCustomer[i].trackingCode,
                             });
                         }
                     }
                 }
                 console.log('NEW CUSTOMER LENGTH', newTeacherCustomerData.length);
                 console.log('First New Teacher Customer:', newTeacherCustomerData[0]);
+                // Bulk create new teacher customers
                 const newTeacherCustomers = yield Teacher_Customer_1.default.bulkCreate(newTeacherCustomerData);
                 console.log('new First Teacher Customer:', newTeacherCustomers[0]);
-                // console.log('New teacher customers created:', newTeacherCustomers.map((item) => item.toJSON()));
                 return [...existingTeacherCustomers, ...newTeacherCustomers];
             }
             catch (error) {
@@ -284,12 +290,11 @@ class TeacherHelper {
                 };
                 //add customers to teacherInfoWithCustomer
                 teacherCustomers.forEach((item) => {
-                    var _a, _b;
                     teacherInfoWithCustomer.customers.push({
                         customerId: Number(item.customerId),
                         customerName: item.customerName,
-                        customerEmails: (_a = item.customerEmails) !== null && _a !== void 0 ? _a : [],
-                        customerPhones: (_b = item.customerPhones) !== null && _b !== void 0 ? _b : [],
+                        customerEmails: item.customerEmails ? [item.customerEmails] : [],
+                        customerPhones: item.customerPhones ? [item.customerPhones] : [],
                         chatInfo: ''
                     });
                 });
@@ -471,7 +476,7 @@ class TeacherHelper {
     //find teacher customer (with teacher info - teacher name id) by chatId
     static findTeacherCustomerByChatId(chatId) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a, _b, _c;
+            var _a;
             try {
                 const teacherCustomer = yield Teacher_Customer_1.default.findOne({
                     where: {
@@ -495,8 +500,8 @@ class TeacherHelper {
                     teacherName: teacher.name,
                     teacherEmail: (_a = teacher.email) !== null && _a !== void 0 ? _a : '',
                     customerName: teacherCustomer.customerName,
-                    customerEmails: (_b = teacherCustomer.customerEmails) !== null && _b !== void 0 ? _b : [],
-                    customerPhones: (_c = teacherCustomer.customerPhones) !== null && _c !== void 0 ? _c : [],
+                    customerEmails: teacherCustomer.customerEmails ? [teacherCustomer.customerEmails] : [],
+                    customerPhones: teacherCustomer.customerPhones ? [teacherCustomer.customerPhones] : [],
                     customerId: teacherCustomer.customerId,
                     chatInfo: teacherCustomer.chatInfo,
                     source: teacherCustomer.source,
@@ -514,7 +519,7 @@ class TeacherHelper {
     ///find teacher customer (with teacher info - teacher name id) by realChatId
     static findTeacherCustomerByRealChatId(realChatId) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a, _b, _c;
+            var _a;
             try {
                 const teacherCustomer = yield Teacher_Customer_1.default.findOne({
                     where: {
@@ -538,8 +543,8 @@ class TeacherHelper {
                     teacherName: teacher.name,
                     teacherEmail: (_a = teacher.email) !== null && _a !== void 0 ? _a : '',
                     customerName: teacherCustomer.customerName,
-                    customerEmails: (_b = teacherCustomer.customerEmails) !== null && _b !== void 0 ? _b : [],
-                    customerPhones: (_c = teacherCustomer.customerPhones) !== null && _c !== void 0 ? _c : [],
+                    customerEmails: teacherCustomer.customerEmails ? [teacherCustomer.customerEmails] : [],
+                    customerPhones: teacherCustomer.customerPhones ? [teacherCustomer.customerPhones] : [],
                     customerId: teacherCustomer.customerId,
                     chatInfo: teacherCustomer.chatInfo,
                     source: teacherCustomer.source,
@@ -584,7 +589,7 @@ class TeacherHelper {
     //find teacher customer (teacher info TeacherInfoModel) by customerId and teacherId
     static findTeacherCustomerByCustomerIdAndTeacherId(customerId, teacherId) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a, _b, _c;
+            var _a;
             try {
                 const teacherCustomer = yield Teacher_Customer_1.default.findOne({
                     where: {
@@ -609,8 +614,58 @@ class TeacherHelper {
                     teacherName: teacher.name,
                     teacherEmail: (_a = teacher.email) !== null && _a !== void 0 ? _a : '',
                     customerName: teacherCustomer.customerName,
-                    customerEmails: (_b = teacherCustomer.customerEmails) !== null && _b !== void 0 ? _b : [],
-                    customerPhones: (_c = teacherCustomer.customerPhones) !== null && _c !== void 0 ? _c : [],
+                    customerEmails: teacherCustomer.customerEmails ? [teacherCustomer.customerEmails] : [],
+                    customerPhones: teacherCustomer.customerPhones ? [teacherCustomer.customerPhones] : [],
+                    customerId: teacherCustomer.customerId,
+                    chatInfo: teacherCustomer.chatInfo,
+                    source: teacherCustomer.source,
+                    chatId: teacherCustomer.chatId,
+                    realChatId: teacherCustomer.realChatId
+                };
+                return resultInfo;
+            }
+            catch (error) {
+                console.error('Error fetching teacher customer:', error);
+                return null;
+            }
+        });
+    }
+    //find teacher customer by phone (teacher info TeacherInfoModel)
+    static findTeacherCustomerByPhone(phone) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            try {
+                // Нормализуем телефон: убираем символ '+' и любые нечисловые символы
+                const normalizedPhone = phone.replace(/\D/g, '');
+                console.log(`Normalized phone for search: ${normalizedPhone}`);
+                // Ищем клиента в базе данных
+                const teacherCustomer = yield Teacher_Customer_1.default.findOne({
+                    where: {
+                        [sequelize_1.Op.and]: [
+                            sequelize_1.Sequelize.literal(`'${normalizedPhone}' = ANY(string_to_array("customerPhones", ','))`),
+                            { isActive: true }
+                        ]
+                    },
+                    raw: true
+                });
+                if (!teacherCustomer) {
+                    console.log('Teacher Customer not found');
+                    return null;
+                }
+                // Ищем учителя по teacherId
+                const teacher = yield TeacherHelper.getTeacherById(teacherCustomer.teacherId);
+                if (!teacher) {
+                    console.log('Teacher not found');
+                    return null;
+                }
+                // Собираем итоговую информацию
+                const resultInfo = {
+                    teacherId: teacher.id,
+                    teacherName: teacher.name,
+                    teacherEmail: (_a = teacher.email) !== null && _a !== void 0 ? _a : '',
+                    customerName: teacherCustomer.customerName,
+                    customerEmails: teacherCustomer.customerEmails ? [teacherCustomer.customerEmails] : [],
+                    customerPhones: teacherCustomer.customerPhones ? [teacherCustomer.customerPhones] : [],
                     customerId: teacherCustomer.customerId,
                     chatInfo: teacherCustomer.chatInfo,
                     source: teacherCustomer.source,

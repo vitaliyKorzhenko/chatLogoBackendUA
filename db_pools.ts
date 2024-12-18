@@ -54,6 +54,7 @@ const newUAConfig = {
     database: process.env.DB_NEW_NAME_UA,
     port: 25060
 };
+console.info('newUAConfig:', newUAConfig);
 export const newUAPool: Pool = mysql.createPool(newUAConfig);
 
 
