@@ -559,6 +559,50 @@ class TeacherHelper {
             }
         });
     }
+    //find teacher customer (with teacher info) by teacherId and customerId
+    static findTeacherCustomerByTeacherIdAndCustomerId(teacherId, customerId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            try {
+                const teacherCustomer = yield Teacher_Customer_1.default.findOne({
+                    where: {
+                        customerId: customerId,
+                        teacherId: teacherId,
+                        isActive: true
+                    },
+                    raw: true
+                });
+                if (!teacherCustomer) {
+                    console.log('Teacher Customer not found');
+                    return null;
+                }
+                //find teacher by teacherId
+                const teacher = yield TeacherHelper.getTeacherById(teacherCustomer.teacherId);
+                if (!teacher) {
+                    console.log('Teacher not found');
+                    return null;
+                }
+                let resultInfo = {
+                    teacherId: teacher.id,
+                    teacherName: teacher.name,
+                    teacherEmail: (_a = teacher.email) !== null && _a !== void 0 ? _a : '',
+                    customerName: teacherCustomer.customerName,
+                    customerEmails: teacherCustomer.customerEmails ? [teacherCustomer.customerEmails] : [],
+                    customerPhones: teacherCustomer.customerPhones ? [teacherCustomer.customerPhones] : [],
+                    customerId: teacherCustomer.customerId,
+                    chatInfo: teacherCustomer.chatInfo,
+                    source: teacherCustomer.source,
+                    chatId: teacherCustomer.chatId,
+                    realChatId: teacherCustomer.realChatId
+                };
+                return resultInfo;
+            }
+            catch (error) {
+                console.error('Error fetching teacher customer:', error);
+                return null;
+            }
+        });
+    }
     //upudate realChatId   by customerId and teacherId 
     static updateRealChatIdByCustomerIdAndTeacherId(customerId, teacherId, realChatId) {
         return __awaiter(this, void 0, void 0, function* () {

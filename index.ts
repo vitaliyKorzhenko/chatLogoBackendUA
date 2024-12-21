@@ -3,11 +3,11 @@ import http from 'http';
 import { Server } from 'socket.io';
 import socketHandler from './socketHandler';
 import teacherRouter from './router/teacherRouter';
-import { newUAPool, uaPool } from './db_pools';
-import { findTeachersCustomer, syncTeachers } from './cronTasks';
 import cors from 'cors'; 
-import twilioWebhook from './twilioWebhook';
-import { launchBot } from './chatLogoBot';
+import dotenv from 'dotenv';
+import centralSocket from './centralSocket'; // Импорт WebSocket подключения
+
+dotenv.config();
 
 const app = express();
 //use env port or 4030
@@ -27,7 +27,6 @@ app.use(cors({
 
 app.use('/api', teacherRouter);
 
-app.use('/twilio', twilioWebhook);
 
 const server = http.createServer(app);
 
@@ -51,21 +50,16 @@ app.get('/', (req: Request, res: Response) => {
 
 server.listen(port, async () => {
   try {
-    console.log(`Server started at PORT :${port}`);
-    try {
-      //stop bot for test
-     
-      await syncTeachers(newUAPool, 'ua');
-      // console.log("Teachers synced successfully!");
-      // await findTeachersCustomer(uaPool, 'ua');
-      // console.log("Teacher Customers found successfully!");
+    console.warn(`Server started at PORT :${port}`);
 
-       await launchBot();
-       console.log('Bot launched successfully!');
-      
-    } catch (error) {
-      console.error('Error launching bot:', error);
+    // Подключение к центральному серверу
+    if (centralSocket.connected) {
+      console.log('Already connected to central WebSocket server.');
+    } else {
+      centralSocket.connect(); // Подключаемся, если не подключены
+      console.log('Connecting to central WebSocket server...');
     }
+
   } catch (error) { 
     console.error('Error starting server:', error);
   }

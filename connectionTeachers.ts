@@ -51,7 +51,7 @@ export class ConnectionTeacher {
 
   // Find connection teacher by teacherId
   public static findConnectionTeacherByTeacherId(teacherId: number) {
-    return this.connections.filter((connection) => connection.teacherId === teacherId);
+    return this.connections.filter((connection) => connection.teacherId == teacherId);
   }
 
   // Add or update connection teacher

@@ -17,11 +17,10 @@ const http_1 = __importDefault(require("http"));
 const socket_io_1 = require("socket.io");
 const socketHandler_1 = __importDefault(require("./socketHandler"));
 const teacherRouter_1 = __importDefault(require("./router/teacherRouter"));
-const db_pools_1 = require("./db_pools");
-const cronTasks_1 = require("./cronTasks");
 const cors_1 = __importDefault(require("cors"));
-const twilioWebhook_1 = __importDefault(require("./twilioWebhook"));
-const chatLogoBot_1 = require("./chatLogoBot");
+const dotenv_1 = __importDefault(require("dotenv"));
+const centralSocket_1 = __importDefault(require("./centralSocket")); // Импорт WebSocket подключения
+dotenv_1.default.config();
 const app = (0, express_1.default)();
 //use env port or 4030
 const port = process.env.PORT || 4030;
@@ -34,7 +33,6 @@ app.use((0, cors_1.default)({
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use('/api', teacherRouter_1.default);
-app.use('/twilio', twilioWebhook_1.default);
 const server = http_1.default.createServer(app);
 const io = new socket_io_1.Server(server, {
     cors: {
@@ -48,18 +46,14 @@ app.get('/', (req, res) => {
 });
 server.listen(port, () => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        console.log(`Server started at PORT :${port}`);
-        try {
-            //stop bot for test
-            yield (0, cronTasks_1.syncTeachers)(db_pools_1.newUAPool, 'ua');
-            // console.log("Teachers synced successfully!");
-            // await findTeachersCustomer(uaPool, 'ua');
-            // console.log("Teacher Customers found successfully!");
-            yield (0, chatLogoBot_1.launchBot)();
-            console.log('Bot launched successfully!');
+        console.warn(`Server started at PORT :${port}`);
+        // Подключение к центральному серверу
+        if (centralSocket_1.default.connected) {
+            console.log('Already connected to central WebSocket server.');
         }
-        catch (error) {
-            console.error('Error launching bot:', error);
+        else {
+            centralSocket_1.default.connect(); // Подключаемся, если не подключены
+            console.log('Connecting to central WebSocket server...');
         }
     }
     catch (error) {

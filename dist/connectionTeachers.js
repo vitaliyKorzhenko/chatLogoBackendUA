@@ -38,7 +38,7 @@ class ConnectionTeacher {
     }
     // Find connection teacher by teacherId
     static findConnectionTeacherByTeacherId(teacherId) {
-        return this.connections.filter((connection) => connection.teacherId === teacherId);
+        return this.connections.filter((connection) => connection.teacherId == teacherId);
     }
     // Add or update connection teacher
     static addOrUpdateConnectionTeacher(socket, email, teacherId) {

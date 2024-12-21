@@ -16,14 +16,14 @@ exports.notifyClientOfNewMessage = notifyClientOfNewMessage;
 exports.default = socketHandler;
 const connectionTeachers_1 = require("./connectionTeachers");
 const teacherHelper_1 = __importDefault(require("./helpers/teacherHelper"));
-const sendTgMessage_1 = require("./sendTgMessage");
+const centralSocket_1 = require("./centralSocket");
 // Переменная для хранения экземпляра io
 let ioInstance = null;
-function notifyClientOfNewMessage(realChatId, message) {
+function notifyClientOfNewMessage(teacherId, customerId, message) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             // Step 1: Find teacher info by realChatId
-            const teacherInfo = yield teacherHelper_1.default.findTeacherCustomerByRealChatId(realChatId);
+            const teacherInfo = yield teacherHelper_1.default.findTeacherCustomerByCustomerIdAndTeacherId(customerId, teacherId);
             //get all connections
             let allConnections = connectionTeachers_1.ConnectionTeacher.connections;
             console.log('All connections:', allConnections);
@@ -41,7 +41,7 @@ function notifyClientOfNewMessage(realChatId, message) {
                 }
             }
             else {
-                console.warn(`No teacherInfo found for realChatId: ${realChatId}`);
+                console.warn(`No teacherInfo found for realChatId: ${customerId}${teacherId}`);
             }
         }
         catch (error) {
@@ -87,17 +87,12 @@ function socketHandler(io) {
             io.emit('message', msg);
         });
         socket.on('send_message', (data) => __awaiter(this, void 0, void 0, function* () {
-            var _a;
             try {
                 console.warn('Send message:', data);
                 const { customerId, teacherId, source, message } = data;
                 yield teacherHelper_1.default.createChatMessage(teacherId, customerId, message.text, 'tg', source, 'teacher');
-                const teacherInfo = yield teacherHelper_1.default.findTeacherCustomerByCustomerIdAndTeacherId(customerId, teacherId);
-                if ((_a = teacherInfo === null || teacherInfo === void 0 ? void 0 : teacherInfo.realChatId) === null || _a === void 0 ? void 0 : _a.length) {
-                    (0, sendTgMessage_1.sendMessage)(teacherInfo.realChatId, message.text);
-                }
                 // Уведомляем фронт о новом сообщении
-                notifyClientOfNewMessage(customerId, message.text);
+                // notifyClientOfNewMessage(customerId, message.text);
             }
             catch (error) {
                 console.error('Error in send_message:', error);
@@ -106,15 +101,18 @@ function socketHandler(io) {
         socket.on('message_from_teacher', (data) => __awaiter(this, void 0, void 0, function* () {
             var _a;
             try {
-                console.warn('MESSAGE FROM CLIENT!', data);
-                const { customerId, teacherId, source, message } = data;
+                console.warn('MESSAGE FROM TEACHER!', data);
+                const { customerId, teacherId, source, message, isEmail } = data;
                 yield teacherHelper_1.default.createChatMessage(teacherId, customerId, message.text, 'tg', source, 'teacher');
                 const teacherInfo = yield teacherHelper_1.default.findTeacherCustomerByCustomerIdAndTeacherId(customerId.toString(), Number(teacherId));
+                console.log('TeacherInfo FIND!:', teacherInfo);
                 if ((_a = teacherInfo === null || teacherInfo === void 0 ? void 0 : teacherInfo.realChatId) === null || _a === void 0 ? void 0 : _a.length) {
-                    (0, sendTgMessage_1.sendMessage)(teacherInfo.realChatId, message.text);
+                    // sendMessage(teacherInfo.realChatId, message.text);
+                    const testEmails = ['vitaliykorzenkoua@gmail.com'];
+                    (0, centralSocket_1.sendMessageToCentralServer)(message.text, teacherInfo.realChatId, isEmail, testEmails);
                 }
                 // Уведомляем фронт о новом сообщении
-                notifyClientOfNewMessage(customerId, message.text);
+                // notifyClientOfNewMessage(customerId, message.text);
             }
             catch (error) {
                 console.error('Error in message_from_teacher:', error);

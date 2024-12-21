@@ -2,15 +2,15 @@ import { Server, Socket } from 'socket.io';
 import { ConnectionTeacher } from './connectionTeachers';
 import TeacherHelper from './helpers/teacherHelper';
 import { IChatMessage, TeacherInfoModel } from './types';
-import { sendMessage } from './sendTgMessage';
+import { sendMessageToCentralServer } from './centralSocket';
 
 // Переменная для хранения экземпляра io
 let ioInstance: Server | null = null;
 
-export async function notifyClientOfNewMessage(realChatId: string, message: IChatMessage) {
+export async function notifyClientOfNewMessage(teacherId: number, customerId: string, message: IChatMessage) {
   try {
     // Step 1: Find teacher info by realChatId
-    const teacherInfo: TeacherInfoModel | null = await TeacherHelper.findTeacherCustomerByRealChatId(realChatId);
+    const teacherInfo: TeacherInfoModel | null = await TeacherHelper.findTeacherCustomerByCustomerIdAndTeacherId(customerId, teacherId);
 
 
     //get all connections
@@ -30,7 +30,7 @@ export async function notifyClientOfNewMessage(realChatId: string, message: ICha
         console.warn(`No connections found for teacherId: ${teacherInfo.teacherId}`);
       }
     } else {
-      console.warn(`No teacherInfo found for realChatId: ${realChatId}`);
+      console.warn(`No teacherInfo found for realChatId: ${customerId}${teacherId}`);
     }
   } catch (error) {
     console.error('Error in notifyClientOfNewMessage:', error);
@@ -95,12 +95,9 @@ export default function socketHandler(io: Server) {
           source,
           'teacher',
         );
-        const teacherInfo: TeacherInfoModel | null = await TeacherHelper.findTeacherCustomerByCustomerIdAndTeacherId(customerId, teacherId);
-        if (teacherInfo?.realChatId?.length) {
-          sendMessage(teacherInfo.realChatId, message.text);
-        }
+     
         // Уведомляем фронт о новом сообщении
-        notifyClientOfNewMessage(customerId, message.text);
+       // notifyClientOfNewMessage(customerId, message.text);
       } catch (error) {
         console.error('Error in send_message:', error);
       }
@@ -108,8 +105,9 @@ export default function socketHandler(io: Server) {
 
     socket.on('message_from_teacher', async (data) => {
       try {
-        console.warn('MESSAGE FROM CLIENT!', data);
-        const { customerId, teacherId, source, message } = data;
+    
+        console.warn('MESSAGE FROM TEACHER!', data);
+        const { customerId, teacherId, source, message, isEmail } = data;
         await TeacherHelper.createChatMessage(
           teacherId,
           customerId,
@@ -119,11 +117,14 @@ export default function socketHandler(io: Server) {
           'teacher',
         );
         const teacherInfo: TeacherInfoModel | null = await TeacherHelper.findTeacherCustomerByCustomerIdAndTeacherId(customerId.toString(), Number(teacherId));
+        console.log('TeacherInfo FIND!:', teacherInfo);
         if (teacherInfo?.realChatId?.length) {
-          sendMessage(teacherInfo.realChatId, message.text);
+         // sendMessage(teacherInfo.realChatId, message.text);
+         const testEmails = ['vitaliykorzenkoua@gmail.com'];
+         sendMessageToCentralServer(message.text, teacherInfo.realChatId, isEmail, testEmails) ;
         }
         // Уведомляем фронт о новом сообщении
-        notifyClientOfNewMessage(customerId, message.text);
+       // notifyClientOfNewMessage(customerId, message.text);
       } catch (error) {
         console.error('Error in message_from_teacher:', error);
       }
