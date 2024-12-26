@@ -473,6 +473,50 @@ class TeacherHelper {
             }
         });
     }
+    //find customer name and customer email by customerId and teacherId
+    static findCustomerAndTeacherNameAndEmailByCustomerIdAndTeacherId(customerId, teacherId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const teacherCustomer = yield Teacher_Customer_1.default.findOne({
+                    where: {
+                        customerId: customerId,
+                        teacherId: teacherId,
+                        isActive: true
+                    },
+                    raw: true
+                });
+                if (!teacherCustomer) {
+                    console.log('Teacher Customer not found');
+                    return null;
+                }
+                console.log('===============FIND TEACHER CUSTOMER ==============', teacherCustomer);
+                //find teacher by teacherId
+                const teacher = yield TeacherHelper.getTeacherById(teacherCustomer.teacherId);
+                if (!teacher) {
+                    console.log('Teacher not found');
+                    return null;
+                }
+                //add teacher name and email to teacherCustomer
+                //parse {vitaliy@gmail.com, nextemail@gmail.com}
+                let emails = teacherCustomer && teacherCustomer.customerEmails ? teacherCustomer.customerEmails : [];
+                let result = {
+                    customerEmails: emails,
+                    customerName: teacherCustomer.customerName,
+                    teacherName: teacher.name,
+                    teacherId: teacher.id,
+                    customerId: teacherCustomer.customerId,
+                    chatId: teacherCustomer.chatId,
+                    source: 'ua',
+                    customerPhones: teacherCustomer.customerPhones
+                };
+                return result;
+            }
+            catch (error) {
+                console.error('========== ERROR findCustomerAndTeacherNameAndEmailByCustomerIdAndTeacherId ==========:', error);
+                return null;
+            }
+        });
+    }
     //find teacher customer (with teacher info - teacher name id) by chatId
     static findTeacherCustomerByChatId(chatId) {
         return __awaiter(this, void 0, void 0, function* () {

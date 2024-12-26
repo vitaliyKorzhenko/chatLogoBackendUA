@@ -109,7 +109,16 @@ function socketHandler(io) {
                 if ((_a = teacherInfo === null || teacherInfo === void 0 ? void 0 : teacherInfo.realChatId) === null || _a === void 0 ? void 0 : _a.length) {
                     // sendMessage(teacherInfo.realChatId, message.text);
                     const testEmails = ['vitaliykorzenkoua@gmail.com'];
-                    (0, centralSocket_1.sendMessageToCentralServer)(message.text, teacherInfo.realChatId, isEmail, testEmails);
+                    if (isEmail) {
+                        let currentCustomer = yield teacherHelper_1.default.findCustomerAndTeacherNameAndEmailByCustomerIdAndTeacherId(customerId.toString(), teacherId);
+                        //parse {vitaliy@gmail.com, nextemail@gmail.com}
+                        if (currentCustomer === null || currentCustomer === void 0 ? void 0 : currentCustomer.customerEmails) {
+                            (0, centralSocket_1.sendMessageToCentralServer)(message.text, teacherInfo.realChatId, true, currentCustomer.customerEmails, currentCustomer.customerName, currentCustomer.teacherName);
+                        }
+                    }
+                    else {
+                        (0, centralSocket_1.sendMessageToCentralServer)(message.text, teacherInfo.realChatId, false, [], '', '');
+                    }
                 }
                 // Уведомляем фронт о новом сообщении
                 // notifyClientOfNewMessage(customerId, message.text);

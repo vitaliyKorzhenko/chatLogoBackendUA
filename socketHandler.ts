@@ -1,7 +1,7 @@
 import { Server, Socket } from 'socket.io';
 import { ConnectionTeacher } from './connectionTeachers';
 import TeacherHelper from './helpers/teacherHelper';
-import { IChatMessage, TeacherInfoModel } from './types';
+import { IChatMessage, TeacherCustomerData, TeacherInfoModel } from './types';
 import { sendMessageToCentralServer } from './centralSocket';
 
 // Переменная для хранения экземпляра io
@@ -121,7 +121,16 @@ export default function socketHandler(io: Server) {
         if (teacherInfo?.realChatId?.length) {
          // sendMessage(teacherInfo.realChatId, message.text);
          const testEmails = ['vitaliykorzenkoua@gmail.com'];
-         sendMessageToCentralServer(message.text, teacherInfo.realChatId, isEmail, testEmails) ;
+         if (isEmail) {
+          let currentCustomer: TeacherCustomerData | null = await TeacherHelper.findCustomerAndTeacherNameAndEmailByCustomerIdAndTeacherId(customerId.toString(), teacherId);
+          //parse {vitaliy@gmail.com, nextemail@gmail.com}
+          if (currentCustomer?.customerEmails) {
+          
+          sendMessageToCentralServer(message.text, teacherInfo.realChatId, true, currentCustomer.customerEmails, currentCustomer.customerName, currentCustomer.teacherName);
+          }
+         } else {
+          sendMessageToCentralServer(message.text, teacherInfo.realChatId, false, [], '', '');
+         }
         }
         // Уведомляем фронт о новом сообщении
        // notifyClientOfNewMessage(customerId, message.text);

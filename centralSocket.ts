@@ -1,9 +1,11 @@
 import { io as Client, Socket } from 'socket.io-client';
 import { notifyClientOfNewMessage } from './socketHandler';
 
-const mode = process.env.MODESERVER || 'DEV';
+const isProd = true;
 
-const CENTRAL_SERVER_URL = 'http://167.172.179.104:4000';
+
+
+const CENTRAL_SERVER_URL = isProd ? 'http://167.172.179.104:4000' : 'http://localhost:4000';
 
 console.warn('CENTRAL_SERVER_URL:', CENTRAL_SERVER_URL);
 
@@ -52,7 +54,7 @@ centralSocket.on('disconnect', () => {
 });
 
 
-export function sendMessageToCentralServer(text: string, chatId: string, addEmail: boolean, emails: string[]): void {
+export function sendMessageToCentralServer(text: string, chatId: string, addEmail: boolean, emails: string[], customerName: string, teacherName: string): void {
     if (!centralSocket.connected) {
       console.warn('Cannot send message: not connected to central server');
       return;
@@ -66,6 +68,8 @@ export function sendMessageToCentralServer(text: string, chatId: string, addEmai
         chatId: chatId,
         addEmail: addEmail,
         emails: emails,
+        customerName: customerName,
+        teacherName: teacherName
      });
     console.log(`Message sent to ${chatId}:`, text);
   }

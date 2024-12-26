@@ -1,6 +1,6 @@
 import { Op, Sequelize } from "sequelize";
 import Teacher from "../models/Teacher";
-import { ServerTeacher, TeacherCustomerModel, TeacherIdModel, TeacherInfoModel, TeacherInfoWithCustomer } from "../types";
+import { ServerTeacher, TeacherCustomerData, TeacherCustomerModel, TeacherIdModel, TeacherInfoModel, TeacherInfoWithCustomer } from "../types";
 import TeacherCustomer from "../models/Teacher_Customer";
 import ChatLoader from "../models/ChatLoaders";
 import ChatMessages from "../models/ChatMessages";
@@ -470,6 +470,49 @@ class TeacherHelper {
         }
     }
 
+
+    //find customer name and customer email by customerId and teacherId
+
+    static async findCustomerAndTeacherNameAndEmailByCustomerIdAndTeacherId(customerId: string, teacherId: number): Promise<TeacherCustomerData | null> {
+        try {
+        const teacherCustomer = await TeacherCustomer.findOne({
+            where: {
+            customerId: customerId,
+            teacherId: teacherId,
+            isActive: true
+            },
+            raw: true
+        });
+        if (!teacherCustomer) {
+            console.log('Teacher Customer not found');
+            return null;
+        }
+        console.log('===============FIND TEACHER CUSTOMER ==============', teacherCustomer);
+        //find teacher by teacherId
+        const teacher = await TeacherHelper.getTeacherById(teacherCustomer.teacherId);
+        if (!teacher) {
+            console.log('Teacher not found');
+            return null;
+        }
+        //add teacher name and email to teacherCustomer
+        //parse {vitaliy@gmail.com, nextemail@gmail.com}
+        let emails = teacherCustomer && teacherCustomer.customerEmails ? teacherCustomer.customerEmails : [];
+       let result: TeacherCustomerData = {
+        customerEmails: emails,
+        customerName: teacherCustomer.customerName,
+        teacherName: teacher.name,
+        teacherId: teacher.id,
+        customerId: teacherCustomer.customerId,
+        chatId: teacherCustomer.chatId,
+        source: 'ua',
+        customerPhones: teacherCustomer.customerPhones
+    }
+        return result;
+        } catch (error) {
+        console.error('========== ERROR findCustomerAndTeacherNameAndEmailByCustomerIdAndTeacherId ==========:', error);
+        return null;
+        }
+    }
     
 
     //find teacher customer (with teacher info - teacher name id) by chatId

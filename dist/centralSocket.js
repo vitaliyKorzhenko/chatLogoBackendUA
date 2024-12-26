@@ -3,8 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendMessageToCentralServer = sendMessageToCentralServer;
 const socket_io_client_1 = require("socket.io-client");
 const socketHandler_1 = require("./socketHandler");
-const mode = process.env.MODESERVER || 'DEV';
-const CENTRAL_SERVER_URL = 'http://167.172.179.104:4000';
+const isProd = true;
+const CENTRAL_SERVER_URL = isProd ? 'http://167.172.179.104:4000' : 'http://localhost:4000';
 console.warn('CENTRAL_SERVER_URL:', CENTRAL_SERVER_URL);
 // Создаем подключение к центральному серверу
 const centralSocket = (0, socket_io_client_1.io)(CENTRAL_SERVER_URL, { autoConnect: false }); // autoConnect: false для ручного управления подключением
@@ -34,7 +34,7 @@ centralSocket.on('connect_error', (error) => {
 centralSocket.on('disconnect', () => {
     console.warn('Disconnected from central WebSocket server');
 });
-function sendMessageToCentralServer(text, chatId, addEmail, emails) {
+function sendMessageToCentralServer(text, chatId, addEmail, emails, customerName, teacherName) {
     if (!centralSocket.connected) {
         console.warn('Cannot send message: not connected to central server');
         return;
@@ -46,6 +46,8 @@ function sendMessageToCentralServer(text, chatId, addEmail, emails) {
         chatId: chatId,
         addEmail: addEmail,
         emails: emails,
+        customerName: customerName,
+        teacherName: teacherName
     });
     console.log(`Message sent to ${chatId}:`, text);
 }

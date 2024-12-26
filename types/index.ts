@@ -91,3 +91,15 @@ export interface TeacherInfoModel {
     sender: string
     id: number;
   }
+
+
+  export interface TeacherCustomerData {
+    teacherId: number;
+    teacherName: string;
+    customerId: string;
+    customerName: string;
+    customerPhones: any;
+    customerEmails: any;
+    chatId: string;
+    source: string;
+  }
