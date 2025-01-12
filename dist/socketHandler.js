@@ -107,17 +107,12 @@ function socketHandler(io) {
                 const teacherInfo = yield teacherHelper_1.default.findTeacherCustomerByCustomerIdAndTeacherId(customerId.toString(), Number(teacherId));
                 console.log('TeacherInfo FIND!:', teacherInfo);
                 if ((_a = teacherInfo === null || teacherInfo === void 0 ? void 0 : teacherInfo.realChatId) === null || _a === void 0 ? void 0 : _a.length) {
-                    // sendMessage(teacherInfo.realChatId, message.text);
-                    const testEmails = ['vitaliykorzenkoua@gmail.com'];
-                    if (isEmail) {
-                        let currentCustomer = yield teacherHelper_1.default.findCustomerAndTeacherNameAndEmailByCustomerIdAndTeacherId(customerId.toString(), teacherId);
-                        //parse {vitaliy@gmail.com, nextemail@gmail.com}
-                        if (currentCustomer === null || currentCustomer === void 0 ? void 0 : currentCustomer.customerEmails) {
-                            (0, centralSocket_1.sendMessageToCentralServer)(message.text, teacherInfo.realChatId, true, currentCustomer.customerEmails, currentCustomer.customerName, currentCustomer.teacherName);
-                        }
-                    }
-                    else {
-                        (0, centralSocket_1.sendMessageToCentralServer)(message.text, teacherInfo.realChatId, false, [], '', '');
+                    let currentCustomer = yield teacherHelper_1.default.findCustomerAndTeacherNameAndEmailByCustomerIdAndTeacherId(customerId.toString(), teacherId);
+                    if (currentCustomer) {
+                        (0, centralSocket_1.sendMessageToCentralServer)({
+                            message: message.text,
+                            customer: currentCustomer,
+                        });
                     }
                 }
                 // Уведомляем фронт о новом сообщении

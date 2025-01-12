@@ -34,22 +34,14 @@ centralSocket.on('connect_error', (error) => {
 centralSocket.on('disconnect', () => {
     console.warn('Disconnected from central WebSocket server');
 });
-function sendMessageToCentralServer(text, chatId, addEmail, emails, customerName, teacherName) {
+function sendMessageToCentralServer(data) {
     if (!centralSocket.connected) {
         console.warn('Cannot send message: not connected to central server');
         return;
     }
-    console.warn('Sending message to central server:', text, chatId, addEmail, emails);
-    centralSocket.emit('messageFromService', {
-        service: 'ukrainianService',
-        text: text,
-        chatId: chatId,
-        addEmail: addEmail,
-        emails: emails,
-        customerName: customerName,
-        teacherName: teacherName
-    });
-    console.log(`Message sent to ${chatId}:`, text);
+    console.warn('Sending message to central server:', data);
+    centralSocket.emit('messageFromService', data);
+    console.log(`Message sent to ${data.customer}:`, data.message);
 }
 // Экспорт сокета
 exports.default = centralSocket;

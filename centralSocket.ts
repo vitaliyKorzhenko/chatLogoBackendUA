@@ -1,5 +1,6 @@
 import { io as Client, Socket } from 'socket.io-client';
 import { notifyClientOfNewMessage } from './socketHandler';
+import { ServerDataMessage } from './types';
 
 const isProd = true;
 
@@ -54,24 +55,16 @@ centralSocket.on('disconnect', () => {
 });
 
 
-export function sendMessageToCentralServer(text: string, chatId: string, addEmail: boolean, emails: string[], customerName: string, teacherName: string): void {
+export function sendMessageToCentralServer(data: ServerDataMessage): void {
     if (!centralSocket.connected) {
       console.warn('Cannot send message: not connected to central server');
       return;
     }
 
-    console.warn('Sending message to central server:', text, chatId, addEmail, emails);
+    console.warn('Sending message to central server:', data);
   
-    centralSocket.emit('messageFromService', {
-        service: 'ukrainianService',
-        text: text,
-        chatId: chatId,
-        addEmail: addEmail,
-        emails: emails,
-        customerName: customerName,
-        teacherName: teacherName
-     });
-    console.log(`Message sent to ${chatId}:`, text);
+    centralSocket.emit('messageFromService', data);
+    console.log(`Message sent to ${data.customer}:`, data.message);
   }
   
 // Экспорт сокета

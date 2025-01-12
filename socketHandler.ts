@@ -119,18 +119,15 @@ export default function socketHandler(io: Server) {
         const teacherInfo: TeacherInfoModel | null = await TeacherHelper.findTeacherCustomerByCustomerIdAndTeacherId(customerId.toString(), Number(teacherId));
         console.log('TeacherInfo FIND!:', teacherInfo);
         if (teacherInfo?.realChatId?.length) {
-         // sendMessage(teacherInfo.realChatId, message.text);
-         const testEmails = ['vitaliykorzenkoua@gmail.com'];
-         if (isEmail) {
           let currentCustomer: TeacherCustomerData | null = await TeacherHelper.findCustomerAndTeacherNameAndEmailByCustomerIdAndTeacherId(customerId.toString(), teacherId);
-          //parse {vitaliy@gmail.com, nextemail@gmail.com}
-          if (currentCustomer?.customerEmails) {
-          
-          sendMessageToCentralServer(message.text, teacherInfo.realChatId, true, currentCustomer.customerEmails, currentCustomer.customerName, currentCustomer.teacherName);
+          if (currentCustomer) {
+          sendMessageToCentralServer(
+            {
+              message: message.text,
+              customer: currentCustomer,
+            });
           }
-         } else {
-          sendMessageToCentralServer(message.text, teacherInfo.realChatId, false, [], '', '');
-         }
+         
         }
         // Уведомляем фронт о новом сообщении
        // notifyClientOfNewMessage(customerId, message.text);

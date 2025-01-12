@@ -1,4 +1,3 @@
-import { json } from "sequelize";
 
 export interface ServerTeacher {
     serverId: number;
@@ -102,4 +101,9 @@ export interface TeacherInfoModel {
     customerEmails: any;
     chatId: string;
     source: string;
+  }
+
+  export interface ServerDataMessage {
+    customer: TeacherCustomerData;
+    message: string;
   }
