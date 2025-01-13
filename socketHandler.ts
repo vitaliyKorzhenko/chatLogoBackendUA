@@ -125,6 +125,7 @@ export default function socketHandler(io: Server) {
             {
               message: message.text,
               customer: currentCustomer,
+              isEmail: isEmail,
             });
           }
          

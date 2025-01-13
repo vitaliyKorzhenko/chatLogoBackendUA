@@ -112,6 +112,7 @@ function socketHandler(io) {
                         (0, centralSocket_1.sendMessageToCentralServer)({
                             message: message.text,
                             customer: currentCustomer,
+                            isEmail: isEmail,
                         });
                     }
                 }

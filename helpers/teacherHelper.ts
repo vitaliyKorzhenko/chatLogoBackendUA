@@ -505,7 +505,8 @@ class TeacherHelper {
         customerId: teacherCustomer.customerId,
         chatId: teacherCustomer.chatId,
         source: 'ua',
-        customerPhones: teacherCustomer.customerPhones
+        customerPhones: teacherCustomer.customerPhones,
+        phone: teacherCustomer.realPhone ? teacherCustomer.realPhone : ''
     }
         return result;
         } catch (error) {

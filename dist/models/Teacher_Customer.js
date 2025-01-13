@@ -3,68 +3,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-/*module.exports = {
-  up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('teacher_customers', {
-      id: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-        allowNull: false,
-      },
-      teacherId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'teachers',
-          key: 'id',
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE',
-      },
-      customerId: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      customerName: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      customerPhones: {
-        type: Sequelize.ARRAY(Sequelize.STRING),
-        allowNull: true,
-      },
-      customerEmails: {
-        type: Sequelize.ARRAY(Sequelize.STRING),
-        allowNull: true,
-      },
-      chatInfo: {
-        type: Sequelize.JSON,
-        allowNull: true,
-      },
-      isActive: {
-        type: Sequelize.BOOLEAN,
-        allowNull: false,
-        defaultValue: true,
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.NOW,
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.NOW,
-      },
-    });
-  },
-
-  down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('teacher_customers');
-  },
-};
-*/
 const sequelize_1 = require("sequelize");
 const db_connection_1 = __importDefault(require("../db_connection"));
 class TeacherCustomer extends sequelize_1.Model {
@@ -124,7 +62,11 @@ TeacherCustomer.init({
     source: {
         type: sequelize_1.DataTypes.STRING,
         allowNull: true,
-    }
+    },
+    realPhone: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: true,
+    },
 }, {
     sequelize: db_connection_1.default,
     tableName: 'teacher_customers',

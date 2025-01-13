@@ -101,9 +101,11 @@ export interface TeacherInfoModel {
     customerEmails: any;
     chatId: string;
     source: string;
+    phone: string;
   }
 
   export interface ServerDataMessage {
     customer: TeacherCustomerData;
     message: string;
+    isEmail: boolean;
   }
