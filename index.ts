@@ -35,6 +35,8 @@ const io = new Server(server, {
     origin: '*',
     methods: ['GET', 'POST'],
   },
+  pingInterval: 25000, // Интервал проверки соединения (25 секунд)
+  pingTimeout: 60000,  // Таймаут разрыва соединения (60 секунд)
 });
 
 socketHandler(io);

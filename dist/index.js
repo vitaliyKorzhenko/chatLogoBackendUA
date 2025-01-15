@@ -39,6 +39,8 @@ const io = new socket_io_1.Server(server, {
         origin: '*',
         methods: ['GET', 'POST'],
     },
+    pingInterval: 25000, // Интервал проверки соединения (25 секунд)
+    pingTimeout: 60000, // Таймаут разрыва соединения (60 секунд)
 });
 (0, socketHandler_1.default)(io);
 app.get('/', (req, res) => {
