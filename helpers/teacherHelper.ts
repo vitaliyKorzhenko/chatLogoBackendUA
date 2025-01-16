@@ -503,7 +503,7 @@ class TeacherHelper {
         teacherName: teacher.name,
         teacherId: teacher.id,
         customerId: teacherCustomer.customerId,
-        chatId: teacherCustomer.chatId,
+        chatId: teacherCustomer.realChatId ? teacherCustomer.realChatId : '',
         source: 'ua',
         customerPhones: teacherCustomer.customerPhones,
         phone: teacherCustomer.realPhone ? teacherCustomer.realPhone : ''
