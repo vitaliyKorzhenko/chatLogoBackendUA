@@ -55,7 +55,7 @@ export default function socketHandler(io: Server) {
 
       //beforea add new conection logs all connections
       let allConnections = ConnectionTeacher.connections;
-      console.log('All connections:', allConnections);
+      console.warn('All connections:', allConnections);
     });
 
     socket.on('selectClient', async (data) => {
@@ -141,5 +141,18 @@ export default function socketHandler(io: Server) {
       console.error('USER DISCONNECTED:', socket.id);
       ConnectionTeacher.removeConnectionTeacher(socket);
     });
+
+    socket.on('connect_error', (err) => {
+      console.error('Connection error:', err.message);
+    });
+  
+    socket.on('reconnect_attempt', (attempt) => {
+      console.warn(`Reconnect attempt #${attempt} for socket ${socket.id}`);
+    });
+  
+    socket.on('reconnect', (attempt) => {
+      console.log(`Socket reconnected after ${attempt} attempts:`, socket.id);
+    });
+    
   });
 }

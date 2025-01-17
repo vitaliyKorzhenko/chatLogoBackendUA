@@ -61,7 +61,7 @@ function socketHandler(io) {
             connectionTeachers_1.ConnectionTeacher.addOrUpdateConnectionTeacher(socket, email, teacherId);
             //beforea add new conection logs all connections
             let allConnections = connectionTeachers_1.ConnectionTeacher.connections;
-            console.log('All connections:', allConnections);
+            console.warn('All connections:', allConnections);
         });
         socket.on('selectClient', (data) => __awaiter(this, void 0, void 0, function* () {
             console.log('Select client:', data);
@@ -126,6 +126,15 @@ function socketHandler(io) {
         socket.on('disconnect', () => {
             console.error('USER DISCONNECTED:', socket.id);
             connectionTeachers_1.ConnectionTeacher.removeConnectionTeacher(socket);
+        });
+        socket.on('connect_error', (err) => {
+            console.error('Connection error:', err.message);
+        });
+        socket.on('reconnect_attempt', (attempt) => {
+            console.warn(`Reconnect attempt #${attempt} for socket ${socket.id}`);
+        });
+        socket.on('reconnect', (attempt) => {
+            console.log(`Socket reconnected after ${attempt} attempts:`, socket.id);
         });
     });
 }
