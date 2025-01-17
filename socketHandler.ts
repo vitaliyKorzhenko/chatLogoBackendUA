@@ -4,7 +4,7 @@ import TeacherHelper from './helpers/teacherHelper';
 import { IChatMessage, TeacherCustomerData, TeacherInfoModel } from './types';
 import { sendMessageToCentralServer } from './centralSocket';
 
-// Переменная для хранения экземпляра io
+// Variable to store the io instance
 let ioInstance: Server | null = null;
 
 export async function notifyClientOfNewMessage(teacherId: number, customerId: string, message: IChatMessage) {
@@ -12,61 +12,65 @@ export async function notifyClientOfNewMessage(teacherId: number, customerId: st
     // Step 1: Find teacher info by realChatId
     const teacherInfo: TeacherInfoModel | null = await TeacherHelper.findTeacherCustomerByCustomerIdAndTeacherId(customerId, teacherId);
 
+    // Get all connections
+    const allConnections = ConnectionTeacher.connections;
+    console.log('[Notify] All connections:', allConnections);
 
-    //get all connections
-    let allConnections = ConnectionTeacher.connections;
-    console.log('All connections:', allConnections);
     if (teacherInfo && teacherInfo.teacherId) {
       // Step 2: Find all sockets for the teacherId
       const connections = ConnectionTeacher.findConnectionTeacherByTeacherId(teacherInfo.teacherId);
 
       if (connections && connections.length > 0) {
         // Step 3: Notify all sockets
-
         connections.forEach((connection) => {
+          console.log(`[Notify] Sending message to socketId=${connection.socketId}`);
           connection.socket.emit('newMessage', { clientId: teacherInfo.customerId, message });
         });
       } else {
-        console.warn(`No connections found for teacherId: ${teacherInfo.teacherId}`);
+        console.warn(`[Notify] No connections found for teacherId: ${teacherInfo.teacherId}`);
       }
     } else {
-      console.warn(`No teacherInfo found for realChatId: ${customerId}${teacherId}`);
+      console.warn(`[Notify] No teacherInfo found for realChatId: ${customerId}${teacherId}`);
     }
   } catch (error) {
-    console.error('Error in notifyClientOfNewMessage:', error);
+    console.error('[Notify] Error in notifyClientOfNewMessage:', error);
   }
 }
 
-
 export default function socketHandler(io: Server) {
-  // Сохраняем ioInstance для внешнего использования
+  // Save ioInstance for external use
   ioInstance = io;
 
   io.on('connection', (socket: Socket) => {
-    console.log('User connected:', socket.id);
+    console.log('[Socket] User connected:', socket.id);
 
-    //on connect add new connection
-
+    // Log current connections
+    const allConnections = ConnectionTeacher.connections;
+    console.log('[Socket] Connections after new user connected:', {
+      total: allConnections.length,
+      details: allConnections.map(({ socketId, email, teacherId }) => ({ socketId, email, teacherId }))
+    });
 
     // Add new connection
     socket.on('addNewConnection', ({ email, id, teacherId }) => {
-      console.log('Add new connection:', email, id, teacherId);
+      console.log('[Socket] Add new connection:', email, id, teacherId);
       ConnectionTeacher.addOrUpdateConnectionTeacher(socket, email, teacherId);
 
-      //beforea add new conection logs all connections
-      let allConnections = ConnectionTeacher.connections;
-      console.warn('All connections:', allConnections);
+      const updatedConnections = ConnectionTeacher.connections;
+      console.warn('[Socket] All connections after adding:', {
+        total: updatedConnections.length,
+        details: updatedConnections.map(({ socketId, email, teacherId }) => ({ socketId, email, teacherId }))
+      });
     });
 
     socket.on('selectClient', async (data) => {
-      console.log('Select client:', data);
+      console.log('[Socket] Select client:', data);
       try {
         const { customerId, teacherId } = data;
-        console.log('TeacherId, customerId:', teacherId, customerId);
+        console.log('[Socket] TeacherId, customerId:', teacherId, customerId);
 
         const messages = await TeacherHelper.findChatMessagesByTeacherIdAndCustomerIdAndSource(teacherId, customerId.toString());
-        console.log('Messages:', messages.length);
-        console.log('First message:', messages[0]);
+        console.log('[Socket] Messages count:', messages.length);
         if (messages.length > 0) {
           socket.emit('clientMessages', {
             messages,
@@ -74,18 +78,18 @@ export default function socketHandler(io: Server) {
           });
         }
       } catch (error) {
-        console.error('Error in selectClient:', error);
+        console.error('[Socket] Error in selectClient:', error);
       }
     });
 
     socket.on('message', (msg) => {
-      console.log('Message from user:', msg);
+      console.log('[Socket] Message from user:', msg);
       io.emit('message', msg);
     });
 
     socket.on('send_message', async (data) => {
       try {
-        console.warn('Send message:', data);
+        console.warn('[Socket] Send message:', data);
         const { customerId, teacherId, source, message } = data;
         await TeacherHelper.createChatMessage(
           teacherId,
@@ -95,18 +99,14 @@ export default function socketHandler(io: Server) {
           source,
           'teacher',
         );
-     
-        // Уведомляем фронт о новом сообщении
-       // notifyClientOfNewMessage(customerId, message.text);
       } catch (error) {
-        console.error('Error in send_message:', error);
+        console.error('[Socket] Error in send_message:', error);
       }
     });
 
     socket.on('message_from_teacher', async (data) => {
       try {
-    
-        console.warn('MESSAGE FROM TEACHER!', data);
+        console.warn('[Socket] Message from teacher:', data);
         const { customerId, teacherId, source, message, isEmail } = data;
         await TeacherHelper.createChatMessage(
           teacherId,
@@ -116,43 +116,45 @@ export default function socketHandler(io: Server) {
           source,
           'teacher',
         );
+
         const teacherInfo: TeacherInfoModel | null = await TeacherHelper.findTeacherCustomerByCustomerIdAndTeacherId(customerId.toString(), Number(teacherId));
-        console.log('TeacherInfo FIND!:', teacherInfo);
+        console.log('[Socket] TeacherInfo found:', teacherInfo);
+
         if (teacherInfo?.realChatId?.length) {
-          let currentCustomer: TeacherCustomerData | null = await TeacherHelper.findCustomerAndTeacherNameAndEmailByCustomerIdAndTeacherId(customerId.toString(), teacherId);
+          const currentCustomer: TeacherCustomerData | null = await TeacherHelper.findCustomerAndTeacherNameAndEmailByCustomerIdAndTeacherId(customerId.toString(), teacherId);
           if (currentCustomer) {
-          sendMessageToCentralServer(
-            {
+            sendMessageToCentralServer({
               message: message.text,
               customer: currentCustomer,
-              isEmail: isEmail,
+              isEmail,
             });
           }
-         
         }
-        // Уведомляем фронт о новом сообщении
-       // notifyClientOfNewMessage(customerId, message.text);
       } catch (error) {
-        console.error('Error in message_from_teacher:', error);
+        console.error('[Socket] Error in message_from_teacher:', error);
       }
     });
 
     socket.on('disconnect', () => {
-      console.error('USER DISCONNECTED:', socket.id);
+      console.error('[Socket] User disconnected:', socket.id);
       ConnectionTeacher.removeConnectionTeacher(socket);
+      const updatedConnections = ConnectionTeacher.connections;
+      console.warn('[Socket] All connections after disconnection:', {
+        total: updatedConnections.length,
+        details: updatedConnections.map(({ socketId, email, teacherId }) => ({ socketId, email, teacherId }))
+      });
     });
 
     socket.on('connect_error', (err) => {
-      console.error('Connection error:', err.message);
+      console.error('[Socket] Connection error:', err.message);
     });
-  
+
     socket.on('reconnect_attempt', (attempt) => {
-      console.warn(`Reconnect attempt #${attempt} for socket ${socket.id}`);
+      console.warn(`[Socket] Reconnect attempt #${attempt} for socket ${socket.id}`);
     });
-  
+
     socket.on('reconnect', (attempt) => {
-      console.log(`Socket reconnected after ${attempt} attempts:`, socket.id);
+      console.log(`[Socket] Reconnected after ${attempt} attempts:`, socket.id);
     });
-    
   });
 }
