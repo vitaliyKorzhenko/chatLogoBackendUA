@@ -55,8 +55,8 @@ export default function socketHandler(io: Server) {
   io.on('connection', (socket: Socket) => {
     console.log('[Socket] User connected:', socket.id);
 
-    //emit confirmConnection
-    console.warn('[Socket] Emitting confirmConnection');
+    console.log('[Socket] Emitting confirmConnection');
+    
     socket.emit('confirmConnection', { socketId: socket.id, message: 'Connected to server' });
 
     // Log current connections
