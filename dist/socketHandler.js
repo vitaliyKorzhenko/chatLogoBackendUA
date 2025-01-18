@@ -50,11 +50,23 @@ function notifyClientOfNewMessage(teacherId, customerId, message) {
         }
     });
 }
+function updatedConnections(socket, email, id, teacherId) {
+    console.log('[Socket] Add new connection:', email, id, teacherId);
+    connectionTeachers_1.ConnectionTeacher.addOrUpdateConnectionTeacher(socket, email, teacherId);
+    const updatedConnections = connectionTeachers_1.ConnectionTeacher.connections;
+    console.warn('[Socket] All connections after adding:', {
+        total: updatedConnections.length,
+        details: updatedConnections.map(({ socketId, email, teacherId }) => ({ socketId, email, teacherId }))
+    });
+}
 function socketHandler(io) {
     // Save ioInstance for external use
     ioInstance = io;
     io.on('connection', (socket) => {
         console.log('[Socket] User connected:', socket.id);
+        //emit confirmConnection
+        console.warn('[Socket] Emitting confirmConnection');
+        socket.emit('confirmConnection', { socketId: socket.id, message: 'Connected to server' });
         // Log current connections
         const allConnections = connectionTeachers_1.ConnectionTeacher.connections;
         console.log('[Socket] Connections after new user connected:', {
@@ -63,13 +75,15 @@ function socketHandler(io) {
         });
         // Add new connection
         socket.on('addNewConnection', ({ email, id, teacherId }) => {
-            console.log('[Socket] Add new connection:', email, id, teacherId);
-            connectionTeachers_1.ConnectionTeacher.addOrUpdateConnectionTeacher(socket, email, teacherId);
-            const updatedConnections = connectionTeachers_1.ConnectionTeacher.connections;
-            console.warn('[Socket] All connections after adding:', {
-                total: updatedConnections.length,
-                details: updatedConnections.map(({ socketId, email, teacherId }) => ({ socketId, email, teacherId }))
-            });
+            updatedConnections(socket, email, id, teacherId);
+        });
+        // Reconnect socket connection
+        socket.on('reconnect_attempt', (attempt) => {
+            console.warn(`[Socket] Reconnect attempt #${attempt} for socket ${socket.id}`);
+            //updatedConnections(socket, socket.handshake.query.email, socket.handshake.query.id, socket.handshake.query.teacherId);
+        });
+        socket.on('reconnect', (attempt) => {
+            console.log(`[Socket] Reconnected after ${attempt} attempts:`, socket.id);
         });
         socket.on('selectClient', (data) => __awaiter(this, void 0, void 0, function* () {
             console.log('[Socket] Select client:', data);
@@ -137,12 +151,6 @@ function socketHandler(io) {
         });
         socket.on('connect_error', (err) => {
             console.error('[Socket] Connection error:', err.message);
-        });
-        socket.on('reconnect_attempt', (attempt) => {
-            console.warn(`[Socket] Reconnect attempt #${attempt} for socket ${socket.id}`);
-        });
-        socket.on('reconnect', (attempt) => {
-            console.log(`[Socket] Reconnected after ${attempt} attempts:`, socket.id);
         });
     });
 }

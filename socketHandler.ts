@@ -37,12 +37,27 @@ export async function notifyClientOfNewMessage(teacherId: number, customerId: st
   }
 }
 
+function updatedConnections(socket: Socket, email: any, id: any, teacherId: any) {
+  console.log('[Socket] Add new connection:', email, id, teacherId);
+      ConnectionTeacher.addOrUpdateConnectionTeacher(socket, email, teacherId);
+
+      const updatedConnections = ConnectionTeacher.connections;
+      console.warn('[Socket] All connections after adding:', {
+        total: updatedConnections.length,
+        details: updatedConnections.map(({ socketId, email, teacherId }) => ({ socketId, email, teacherId }))
+      });
+}
+
 export default function socketHandler(io: Server) {
   // Save ioInstance for external use
   ioInstance = io;
 
   io.on('connection', (socket: Socket) => {
     console.log('[Socket] User connected:', socket.id);
+
+    //emit confirmConnection
+    console.warn('[Socket] Emitting confirmConnection');
+    socket.emit('confirmConnection', { socketId: socket.id, message: 'Connected to server' });
 
     // Log current connections
     const allConnections = ConnectionTeacher.connections;
@@ -53,14 +68,17 @@ export default function socketHandler(io: Server) {
 
     // Add new connection
     socket.on('addNewConnection', ({ email, id, teacherId }) => {
-      console.log('[Socket] Add new connection:', email, id, teacherId);
-      ConnectionTeacher.addOrUpdateConnectionTeacher(socket, email, teacherId);
+      updatedConnections(socket, email, id, teacherId);
+    });
 
-      const updatedConnections = ConnectionTeacher.connections;
-      console.warn('[Socket] All connections after adding:', {
-        total: updatedConnections.length,
-        details: updatedConnections.map(({ socketId, email, teacherId }) => ({ socketId, email, teacherId }))
-      });
+    // Reconnect socket connection
+    socket.on('reconnect_attempt', (attempt) => {
+      console.warn(`[Socket] Reconnect attempt #${attempt} for socket ${socket.id}`);
+      //updatedConnections(socket, socket.handshake.query.email, socket.handshake.query.id, socket.handshake.query.teacherId);
+    });
+
+    socket.on('reconnect', (attempt) => {
+      console.log(`[Socket] Reconnected after ${attempt} attempts:`, socket.id);
     });
 
     socket.on('selectClient', async (data) => {
@@ -147,14 +165,6 @@ export default function socketHandler(io: Server) {
 
     socket.on('connect_error', (err) => {
       console.error('[Socket] Connection error:', err.message);
-    });
-
-    socket.on('reconnect_attempt', (attempt) => {
-      console.warn(`[Socket] Reconnect attempt #${attempt} for socket ${socket.id}`);
-    });
-
-    socket.on('reconnect', (attempt) => {
-      console.log(`[Socket] Reconnected after ${attempt} attempts:`, socket.id);
     });
   });
 }
