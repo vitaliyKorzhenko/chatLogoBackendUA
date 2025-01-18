@@ -63,9 +63,11 @@ function socketHandler(io) {
     // Save ioInstance for external use
     ioInstance = io;
     io.on('connection', (socket) => {
-        console.log('[Socket] User connected:', socket.id);
-        console.log('[Socket] Emitting confirmConnection');
-        socket.emit('confirmConnection', { socketId: socket.id, message: 'Connected to server' });
+        console.warn('[Socket] User connected:', socket.id + 'time: ' + new Date().toISOString());
+        if (socket && socket.connected) {
+            console.warn('[Socket] Conected socket EMIT confirmConnection' + 'time: ' + new Date().toISOString());
+            socket.emit('confirmConnection', { message: 'Connected to server' });
+        }
         // Log current connections
         const allConnections = connectionTeachers_1.ConnectionTeacher.connections;
         console.log('[Socket] Connections after new user connected:', {

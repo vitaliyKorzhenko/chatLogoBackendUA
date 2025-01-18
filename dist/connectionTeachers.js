@@ -80,7 +80,11 @@ class ConnectionTeacher {
     }
     // Log all connections
     static logConnections() {
-        console.log(`[Log] Current connections:`, this.connections);
+        //logs connections length, and details of each connection
+        console.log(`[Log] Total connections:`, this.connections.length);
+        this.connections.forEach((connection) => {
+            console.log(`[Log] Connection:`, connection.socket.id, connection.email, connection.teacherId);
+        });
     }
 }
 exports.ConnectionTeacher = ConnectionTeacher;
