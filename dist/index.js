@@ -13,7 +13,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const http_1 = __importDefault(require("http"));
+const https_1 = __importDefault(require("https")); // Подключаем HTTPS вместо HTTP
+const fs_1 = __importDefault(require("fs")); // Для чтения сертификатов
 const socket_io_1 = require("socket.io");
 const socketHandler_1 = __importDefault(require("./socketHandler"));
 const teacherRouter_1 = __importDefault(require("./router/teacherRouter"));
@@ -24,16 +25,28 @@ dotenv_1.default.config();
 const app = (0, express_1.default)();
 //use env port or 4030
 const port = process.env.PORT || 4030;
+// Пути к сертификатам
+const keyPath = '/etc/letsencrypt/live/chatgovorika.chat/privkey.pem';
+const certPath = '/etc/letsencrypt/live/chatgovorika.chat/fullchain.pem';
+// Читаем сертификаты
+const httpsOptions = {
+    key: fs_1.default.readFileSync(keyPath),
+    cert: fs_1.default.readFileSync(certPath),
+};
 // Подключаем middleware для обработки JSON
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true })); // Добавляем поддержку urlencoded данных
+// Настройки CORS
 app.use((0, cors_1.default)({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+// Роутер
 app.use('/api', teacherRouter_1.default);
-const server = http_1.default.createServer(app);
+// Создаём HTTPS-сервер
+const server = https_1.default.createServer(httpsOptions, app);
+// Инициализируем Socket.IO
 const io = new socket_io_1.Server(server, {
     cors: {
         origin: '*',
@@ -42,10 +55,12 @@ const io = new socket_io_1.Server(server, {
     pingInterval: 15000, // Отправляем пинг каждые 15 секунд
     pingTimeout: 30000, // Ожидаем ответа в течение 30 секунд
 });
+// Подключаем обработчики сокетов
 (0, socketHandler_1.default)(io);
 app.get('/', (req, res) => {
     res.send('Hello World!');
 });
+// Запускаем сервер
 server.listen(port, () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         console.warn(`Server started at PORT :${port}`);
