@@ -41,6 +41,7 @@ export interface CustomerInfo {
     customerPhones: string[];
     customerEmails: string[];
     chatInfo: string;
+    chatEnabled?: boolean;
 }
 export interface TeacherInfoWithCustomer {
     teacherId: number;

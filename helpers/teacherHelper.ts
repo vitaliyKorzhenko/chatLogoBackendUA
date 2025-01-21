@@ -299,7 +299,10 @@ class TeacherHelper {
               customerName: item.customerName,
               customerEmails: item.customerEmails ? [item.customerEmails]: [],
               customerPhones: item.customerPhones ? [item.customerPhones] : [],
-              chatInfo: ''
+              chatInfo: '',
+              //chat enabled if realChatId or realPhone not null
+              chatEnabled: item.realChatId || item.realPhone ? true : false,
+              
             });
         });
         return teacherInfoWithCustomer;
