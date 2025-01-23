@@ -265,6 +265,30 @@ class TeacherHelper {
         });
     }
     //create teacher info with teacher customers (by email teacher)
+    //find by teacherId and source array customersId + count unread messages (isRead = false or null) + total unread messages use only Table ChatMessages
+    static findCustomersIdAndUnreadMessagesByTeacherIdAndSource(teacherId, source) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                //ChatMessages groupBy teacherId, customerId, then count unread messages, and count toal unread messages
+                const customers = yield ChatMessages_1.default.findAll({
+                    attributes: ['customerId', [sequelize_1.Sequelize.fn('COUNT', sequelize_1.Sequelize.col('isRead')), 'unreadMessages']],
+                    where: {
+                        teacherId: teacherId,
+                        source: source,
+                        isRead: {
+                            [sequelize_1.Op.or]: [false, null]
+                        }
+                    },
+                    group: ['customerId'],
+                    raw: true
+                });
+                return customers;
+            }
+            catch (error) {
+                return [];
+            }
+        });
+    }
     static findTeacherInfoWithCustomersByEmail(email) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a, _b;
@@ -288,8 +312,14 @@ class TeacherHelper {
                     source: (_b = teacher.source) !== null && _b !== void 0 ? _b : '',
                     customers: []
                 };
+                //step 2 - find customersId and unread messages
+                const customersIdAndUnreadMessages = yield TeacherHelper.findCustomersIdAndUnreadMessagesByTeacherIdAndSource(teacher.id, 'ua');
+                console.log('CustomersIdAndUnreadMessages:', customersIdAndUnreadMessages);
                 //add customers to teacherInfoWithCustomer
+                let totalUnreadMessages = 0;
                 teacherCustomers.forEach((item) => {
+                    //find customer in customersIdAndUnreadMessages
+                    let customer = customersIdAndUnreadMessages.find((element) => element.customerId == item.customerId);
                     teacherInfoWithCustomer.customers.push({
                         customerId: Number(item.customerId),
                         customerName: item.customerName,
@@ -298,8 +328,13 @@ class TeacherHelper {
                         chatInfo: '',
                         //chat enabled if realChatId or realPhone not null
                         chatEnabled: item.realChatId || item.realPhone ? true : false,
+                        unreadMessages: customer && customer.unreadMessages ? customer.unreadMessages : 0
                     });
+                    if (customer && customer.unreadMessages) {
+                        totalUnreadMessages += customer.unreadMessages;
+                    }
                 });
+                teacherInfoWithCustomer.totalUnreadMessages = totalUnreadMessages;
                 return teacherInfoWithCustomer;
             }
             catch (error) {
@@ -433,21 +468,43 @@ class TeacherHelper {
         });
     }
     //find ChatMessages by teacherId and customerId and source
-    static findChatMessagesByTeacherIdAndCustomerIdAndSource(teacherId, customerId) {
-        return __awaiter(this, void 0, void 0, function* () {
+    static findChatMessagesByTeacherIdAndCustomerIdAndSource(teacherId_1, customerId_1) {
+        return __awaiter(this, arguments, void 0, function* (teacherId, customerId, limit = 50) {
             try {
                 const chatMessages = yield ChatMessages_1.default.findAll({
                     where: {
                         teacherId: teacherId,
                         customerId: customerId,
                     },
-                    raw: true
+                    raw: true,
+                    limit: limit,
                 });
                 return chatMessages;
             }
             catch (error) {
                 console.error('Error fetching chat messages:', error);
                 throw error;
+            }
+        });
+    }
+    //update ChatMessages isRead (set -> true) by teacherId and customerId and source
+    static updateChatMessagesIsReadByTeacherIdAndCustomerIdAndSource(teacherId, customerId, source) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield ChatMessages_1.default.update({
+                    isRead: true
+                }, {
+                    where: {
+                        teacherId: teacherId,
+                        customerId: customerId,
+                        source: source
+                    }
+                });
+                return true;
+            }
+            catch (error) {
+                console.error('Error updating chat messages:', error);
+                return false;
             }
         });
     }

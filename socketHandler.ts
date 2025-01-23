@@ -88,7 +88,10 @@ export default function socketHandler(io: Server) {
         const { customerId, teacherId } = data;
         console.log('[Socket] TeacherId, customerId:', teacherId, customerId);
 
-        const messages = await TeacherHelper.findChatMessagesByTeacherIdAndCustomerIdAndSource(teacherId, customerId.toString());
+        const messages = await TeacherHelper.findChatMessagesByTeacherIdAndCustomerIdAndSource(teacherId, customerId.toString(), 50);
+        //update isRead status
+        await TeacherHelper.updateChatMessagesIsReadByTeacherIdAndCustomerIdAndSource(teacherId, customerId.toString(), 'ua');
+
         console.log('[Socket] Messages count:', messages.length);
         if (messages.length > 0) {
           socket.emit('clientMessages', {

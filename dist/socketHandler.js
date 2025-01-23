@@ -91,7 +91,9 @@ function socketHandler(io) {
             try {
                 const { customerId, teacherId } = data;
                 console.log('[Socket] TeacherId, customerId:', teacherId, customerId);
-                const messages = yield teacherHelper_1.default.findChatMessagesByTeacherIdAndCustomerIdAndSource(teacherId, customerId.toString());
+                const messages = yield teacherHelper_1.default.findChatMessagesByTeacherIdAndCustomerIdAndSource(teacherId, customerId.toString(), 50);
+                //update isRead status
+                yield teacherHelper_1.default.updateChatMessagesIsReadByTeacherIdAndCustomerIdAndSource(teacherId, customerId.toString(), 'ua');
                 console.log('[Socket] Messages count:', messages.length);
                 if (messages.length > 0) {
                     socket.emit('clientMessages', {

@@ -5,6 +5,7 @@ import TeacherCustomer from "../models/Teacher_Customer";
 import ChatLoader from "../models/ChatLoaders";
 import ChatMessages from "../models/ChatMessages";
 import {ChatMessagesModel} from "../types/index";
+import { AnyARecord } from "dns";
 
 class TeacherHelper {
   // Метод для создания нового учителя
@@ -269,6 +270,28 @@ class TeacherHelper {
 
     //create teacher info with teacher customers (by email teacher)
 
+     //find by teacherId and source array customersId + count unread messages (isRead = false or null) + total unread messages use only Table ChatMessages
+     static async findCustomersIdAndUnreadMessagesByTeacherIdAndSource(teacherId: number, source: string): Promise<any[]> {
+        try {
+            //ChatMessages groupBy teacherId, customerId, then count unread messages, and count toal unread messages
+        const customers = await ChatMessages.findAll({
+            attributes: ['customerId', [Sequelize.fn('COUNT', Sequelize.col('isRead')), 'unreadMessages']],
+            where: {
+            teacherId: teacherId,
+            source: source,
+            isRead: {
+                [Op.or]: [false, null]
+            }
+            },
+            group: ['customerId'],
+            raw: true
+        });
+        return customers
+            
+        } catch (error) {
+            return [];
+        }
+    }
 
     static async findTeacherInfoWithCustomersByEmail(email: string): Promise<TeacherInfoWithCustomer | null> {
         try {
@@ -292,8 +315,15 @@ class TeacherHelper {
             source: teacher.source ?? '',
             customers: []
         };
+
+        //step 2 - find customersId and unread messages
+        const customersIdAndUnreadMessages = await TeacherHelper.findCustomersIdAndUnreadMessagesByTeacherIdAndSource(teacher.id, 'ua');
+        console.log('CustomersIdAndUnreadMessages:', customersIdAndUnreadMessages);
         //add customers to teacherInfoWithCustomer
+        let totalUnreadMessages = 0;
         teacherCustomers.forEach((item) => {
+            //find customer in customersIdAndUnreadMessages
+            let customer = customersIdAndUnreadMessages.find((element) => element.customerId == item.customerId);
             teacherInfoWithCustomer.customers.push({
               customerId: Number(item.customerId),
               customerName: item.customerName,
@@ -302,15 +332,24 @@ class TeacherHelper {
               chatInfo: '',
               //chat enabled if realChatId or realPhone not null
               chatEnabled: item.realChatId || item.realPhone ? true : false,
+              unreadMessages: customer && customer.unreadMessages ? customer.unreadMessages : 0
               
             });
+            if (customer && customer.unreadMessages) {
+                totalUnreadMessages += customer.unreadMessages;
+            }
         });
+        teacherInfoWithCustomer.totalUnreadMessages = totalUnreadMessages;
         return teacherInfoWithCustomer;
         } catch (error) {
         console.error('Error fetching teacher info with customers:', error);
         throw error;
         }
     }
+
+   
+
+
 
     //find chat Loader by source
 
@@ -433,19 +472,46 @@ class TeacherHelper {
     }
     //find ChatMessages by teacherId and customerId and source
 
-    static async findChatMessagesByTeacherIdAndCustomerIdAndSource(teacherId: number, customerId: string): Promise<ChatMessages[]> {
+    static async findChatMessagesByTeacherIdAndCustomerIdAndSource(teacherId: number, customerId: string, limit: number  = 50): Promise<ChatMessages[]> {
         try {
         const chatMessages = await ChatMessages.findAll({
             where: {
             teacherId: teacherId,
             customerId: customerId,
             },
-            raw: true
+            raw: true,
+            limit: limit,
         });
         return chatMessages;
         } catch (error) {
         console.error('Error fetching chat messages:', error);
         throw error;
+        }
+    }
+    
+    //update ChatMessages isRead (set -> true) by teacherId and customerId and source
+
+    static async updateChatMessagesIsReadByTeacherIdAndCustomerIdAndSource(teacherId: number, customerId: string, source: string): Promise<boolean | null> {
+        try {
+        await ChatMessages.update(
+            {
+            isRead: true
+            },
+            {
+            where: {
+                teacherId: teacherId,
+                customerId: customerId,
+                source: source
+            }
+        }
+        );
+
+            
+        return true;
+        } catch (error) {
+        console.error('Error updating chat messages:', error);
+            return false
+
         }
     }
 

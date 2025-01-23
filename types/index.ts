@@ -42,6 +42,7 @@ export interface CustomerInfo {
     customerEmails: string[];
     chatInfo: string;
     chatEnabled?: boolean;
+    unreadMessages?: number;
 }
 export interface TeacherInfoWithCustomer {
     teacherId: number;
@@ -49,6 +50,7 @@ export interface TeacherInfoWithCustomer {
     teacherEmail: string;
     source: string;
     customers: CustomerInfo[];
+    totalUnreadMessages?: number;
 }
 
 //chat messages model

@@ -134,6 +134,12 @@ ChatMessages.init({
         type: sequelize_1.DataTypes.STRING,
         allowNull: true,
     },
+    isSavedToBumes: {
+        type: sequelize_1.DataTypes.BOOLEAN
+    },
+    isRead: {
+        type: sequelize_1.DataTypes.BOOLEAN
+    }
 }, {
     sequelize: db_connection_1.default, // передаем экземпляр подключения
     tableName: 'chat_messages', // название таблицы

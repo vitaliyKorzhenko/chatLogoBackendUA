@@ -82,6 +82,8 @@ class ChatMessages extends Model {
   public source!: string;
   public inBound!: boolean; // true - входящее, false - исходящее
   public sender!: string; //client, teacher
+  public isSavedToBumes!: boolean;
+  public isRead!: boolean;
 }
 
 ChatMessages.init(
@@ -147,7 +149,16 @@ ChatMessages.init(
         type: DataTypes.STRING,
         allowNull: true,
         },
+        isSavedToBumes: {
+          type: DataTypes.BOOLEAN
+      
+        },
+        isRead: {
+          type: DataTypes.BOOLEAN
+        }
     },
+    
+    
 
   {
     sequelize, // передаем экземпляр подключения
