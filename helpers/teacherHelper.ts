@@ -332,11 +332,11 @@ class TeacherHelper {
               chatInfo: '',
               //chat enabled if realChatId or realPhone not null
               chatEnabled: item.realChatId || item.realPhone ? true : false,
-              unreadMessages: customer && customer.unreadMessages ? customer.unreadMessages : 0
+              unreadMessages: customer && customer.unreadMessages ? Number(customer.unreadMessages) : 0
               
             });
             if (customer && customer.unreadMessages) {
-                totalUnreadMessages += customer.unreadMessages;
+                totalUnreadMessages += Number(customer.unreadMessages);
             }
         });
         teacherInfoWithCustomer.totalUnreadMessages = totalUnreadMessages;
