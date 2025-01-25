@@ -139,6 +139,9 @@ ChatMessages.init({
     },
     isRead: {
         type: sequelize_1.DataTypes.BOOLEAN
+    },
+    format: {
+        type: sequelize_1.DataTypes.STRING
     }
 }, {
     sequelize: db_connection_1.default, // передаем экземпляр подключения

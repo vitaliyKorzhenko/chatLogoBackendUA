@@ -84,6 +84,7 @@ class ChatMessages extends Model {
   public sender!: string; //client, teacher
   public isSavedToBumes!: boolean;
   public isRead!: boolean;
+  public format!: string;
 }
 
 ChatMessages.init(
@@ -155,6 +156,9 @@ ChatMessages.init(
         },
         isRead: {
           type: DataTypes.BOOLEAN
+        },
+        format: {
+          type: DataTypes.STRING
         }
     },
     
