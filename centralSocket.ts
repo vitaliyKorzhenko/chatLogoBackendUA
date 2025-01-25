@@ -15,7 +15,8 @@ interface INewMessage {
     text: string,
     teacherId: number,
     customerId: string,
-    messageId: number
+    messageId: number,
+    format: string,
 }
 
 // Создаем подключение к центральному серверу
@@ -39,9 +40,10 @@ centralSocket.on('newMessage', (message: INewMessage) => {
     source: 'ua',
     timestamp: new Date().toISOString(),
     clientId: Number(message.customerId),
-    id: message.messageId
+    id: message.messageId,
+    format: message.format
+  });
 
-});
 });
 
 // Обработка ошибок подключения

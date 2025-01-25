@@ -23,7 +23,8 @@ centralSocket.on('newMessage', (message) => {
         source: 'ua',
         timestamp: new Date().toISOString(),
         clientId: Number(message.customerId),
-        id: message.messageId
+        id: message.messageId,
+        format: message.format
     });
 });
 // Обработка ошибок подключения

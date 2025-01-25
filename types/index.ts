@@ -92,6 +92,7 @@ export interface TeacherInfoModel {
     source: string;
     sender: string
     id: number;
+    format: string;
   }
 
 
