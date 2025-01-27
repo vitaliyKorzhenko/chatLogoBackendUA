@@ -17,6 +17,7 @@ const Teacher_1 = __importDefault(require("../models/Teacher"));
 const Teacher_Customer_1 = __importDefault(require("../models/Teacher_Customer"));
 const ChatLoaders_1 = __importDefault(require("../models/ChatLoaders"));
 const ChatMessages_1 = __importDefault(require("../models/ChatMessages"));
+const sourceHelper_1 = require("../sourceHelper");
 class TeacherHelper {
     // Метод для создания нового учителя
     static createTeacher(data) {
@@ -313,7 +314,7 @@ class TeacherHelper {
                     customers: []
                 };
                 //step 2 - find customersId and unread messages
-                const customersIdAndUnreadMessages = yield TeacherHelper.findCustomersIdAndUnreadMessagesByTeacherIdAndSource(teacher.id, 'ua');
+                const customersIdAndUnreadMessages = yield TeacherHelper.findCustomersIdAndUnreadMessagesByTeacherIdAndSource(teacher.id, sourceHelper_1.defaultSource);
                 console.log('CustomersIdAndUnreadMessages:', customersIdAndUnreadMessages);
                 //add customers to teacherInfoWithCustomer
                 let totalUnreadMessages = 0;
@@ -509,8 +510,8 @@ class TeacherHelper {
         });
     }
     //create ChatMessages use teacherId, customerId, messageText, messageType, source
-    static createChatMessage(teacherId, customerId, messageText, messageType, source, sender) {
-        return __awaiter(this, void 0, void 0, function* () {
+    static createChatMessage(teacherId_1, customerId_1, messageText_1, messageType_1, source_1, sender_1) {
+        return __awaiter(this, arguments, void 0, function* (teacherId, customerId, messageText, messageType, source, sender, isFile = false) {
             try {
                 const newChatMessage = yield ChatMessages_1.default.create({
                     messageText,
@@ -521,7 +522,8 @@ class TeacherHelper {
                     isActive: true,
                     serverDate: new Date(),
                     sender: sender,
-                    serverId: '0'
+                    serverId: '0',
+                    format: isFile ? 'file' : 'text'
                 });
                 console.log('New chat message created:', newChatMessage.toJSON());
                 return newChatMessage;
@@ -565,7 +567,7 @@ class TeacherHelper {
                     teacherId: teacher.id,
                     customerId: teacherCustomer.customerId,
                     chatId: teacherCustomer.realChatId ? teacherCustomer.realChatId : '',
-                    source: 'ua',
+                    source: sourceHelper_1.defaultSource,
                     customerPhones: teacherCustomer.customerPhones,
                     phone: teacherCustomer.realPhone ? teacherCustomer.realPhone : ''
                 };

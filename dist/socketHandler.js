@@ -17,6 +17,7 @@ exports.default = socketHandler;
 const connectionTeachers_1 = require("./connectionTeachers");
 const teacherHelper_1 = __importDefault(require("./helpers/teacherHelper"));
 const centralSocket_1 = require("./centralSocket");
+const sourceHelper_1 = require("./sourceHelper");
 // Variable to store the io instance
 let ioInstance = null;
 function notifyClientOfNewMessage(teacherId, customerId, message) {
@@ -93,7 +94,7 @@ function socketHandler(io) {
                 console.log('[Socket] TeacherId, customerId:', teacherId, customerId);
                 const messages = yield teacherHelper_1.default.findChatMessagesByTeacherIdAndCustomerIdAndSource(teacherId, customerId.toString(), 50);
                 //update isRead status
-                yield teacherHelper_1.default.updateChatMessagesIsReadByTeacherIdAndCustomerIdAndSource(teacherId, customerId.toString(), 'ua');
+                yield teacherHelper_1.default.updateChatMessagesIsReadByTeacherIdAndCustomerIdAndSource(teacherId, customerId.toString(), sourceHelper_1.defaultSource);
                 console.log('[Socket] Messages count:', messages.length);
                 if (messages.length > 0) {
                     socket.emit('clientMessages', {
@@ -124,8 +125,8 @@ function socketHandler(io) {
             var _a;
             try {
                 console.warn('[Socket] Message from teacher:', data);
-                const { customerId, teacherId, source, message, isEmail } = data;
-                yield teacherHelper_1.default.createChatMessage(teacherId, customerId, message.text, 'tg', source, 'teacher');
+                const { customerId, teacherId, source, message, isEmail, isFile } = data;
+                yield teacherHelper_1.default.createChatMessage(teacherId, customerId, message.text, 'tg', source, 'teacher', isFile);
                 const teacherInfo = yield teacherHelper_1.default.findTeacherCustomerByCustomerIdAndTeacherId(customerId.toString(), Number(teacherId));
                 console.log('[Socket] TeacherInfo found:', teacherInfo);
                 if ((_a = teacherInfo === null || teacherInfo === void 0 ? void 0 : teacherInfo.realChatId) === null || _a === void 0 ? void 0 : _a.length) {
@@ -135,6 +136,7 @@ function socketHandler(io) {
                             message: message.text,
                             customer: currentCustomer,
                             isEmail,
+                            isFile
                         });
                     }
                 }

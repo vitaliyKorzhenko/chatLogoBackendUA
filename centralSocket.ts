@@ -1,6 +1,7 @@
 import { io as Client, Socket } from 'socket.io-client';
 import { notifyClientOfNewMessage } from './socketHandler';
 import { ServerDataMessage } from './types';
+import { defaultSource } from './sourceHelper';
 
 const isProd = true;
 
@@ -37,7 +38,7 @@ centralSocket.on('newMessage', (message: INewMessage) => {
   notifyClientOfNewMessage(message.teacherId, message.customerId, { 
     text: message.text,
     sender : 'client',
-    source: 'ua',
+    source: defaultSource,
     timestamp: new Date().toISOString(),
     clientId: Number(message.customerId),
     id: message.messageId,

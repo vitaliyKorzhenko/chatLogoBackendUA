@@ -112,4 +112,5 @@ export interface TeacherInfoModel {
     customer: TeacherCustomerData;
     message: string;
     isEmail: boolean;
+    isFile: boolean;
   }

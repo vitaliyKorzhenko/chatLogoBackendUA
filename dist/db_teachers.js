@@ -31,6 +31,7 @@ exports.findTeacherCustomerWithChats = findTeacherCustomerWithChats;
 exports.findMessagesWithFullInfo = findMessagesWithFullInfo;
 const teacherHelper_1 = __importDefault(require("./helpers/teacherHelper"));
 const db_pools_1 = require("./db_pools");
+const sourceHelper_1 = require("./sourceHelper");
 // MySQL connection pool setup
 require('dotenv').config();
 function fetchTeacher(pool, teacherId) {
@@ -378,7 +379,7 @@ function findTeacherCustomerWithChats(pool, source) {
                     console.log(`Fetched ${results.length} records.`, results[0]);
                     results.forEach((result) => {
                         teacherCustomerModels.push({
-                            source: source,
+                            source: sourceHelper_1.defaultSource,
                             trackingCode: result.tracking_code,
                             chatId: result.chat_id,
                             channelId: result.channel_id,

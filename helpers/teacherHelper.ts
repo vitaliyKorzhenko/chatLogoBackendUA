@@ -6,6 +6,7 @@ import ChatLoader from "../models/ChatLoaders";
 import ChatMessages from "../models/ChatMessages";
 import {ChatMessagesModel} from "../types/index";
 import { AnyARecord } from "dns";
+import { defaultSource } from "../sourceHelper";
 
 class TeacherHelper {
   // Метод для создания нового учителя
@@ -317,7 +318,7 @@ class TeacherHelper {
         };
 
         //step 2 - find customersId and unread messages
-        const customersIdAndUnreadMessages = await TeacherHelper.findCustomersIdAndUnreadMessagesByTeacherIdAndSource(teacher.id, 'ua');
+        const customersIdAndUnreadMessages = await TeacherHelper.findCustomersIdAndUnreadMessagesByTeacherIdAndSource(teacher.id, defaultSource);
         console.log('CustomersIdAndUnreadMessages:', customersIdAndUnreadMessages);
         //add customers to teacherInfoWithCustomer
         let totalUnreadMessages = 0;
@@ -517,7 +518,7 @@ class TeacherHelper {
 
 
     //create ChatMessages use teacherId, customerId, messageText, messageType, source
-    static async createChatMessage(teacherId: number, customerId: string, messageText: string, messageType: string, source: string, sender: string ) {
+    static async createChatMessage(teacherId: number, customerId: string, messageText: string, messageType: string, source: string, sender: string, isFile: boolean = false): Promise<ChatMessages | null>  {
         try {
         const newChatMessage = await ChatMessages.create({
             messageText,
@@ -528,7 +529,8 @@ class TeacherHelper {
             isActive: true,
             serverDate: new Date(),
             sender: sender,
-            serverId: '0'
+            serverId: '0',
+            format: isFile ? 'file' : 'text'
         });
         console.log('New chat message created:', newChatMessage.toJSON());
         return newChatMessage;
@@ -573,7 +575,7 @@ class TeacherHelper {
         teacherId: teacher.id,
         customerId: teacherCustomer.customerId,
         chatId: teacherCustomer.realChatId ? teacherCustomer.realChatId : '',
-        source: 'ua',
+        source: defaultSource,
         customerPhones: teacherCustomer.customerPhones,
         phone: teacherCustomer.realPhone ? teacherCustomer.realPhone : ''
     }

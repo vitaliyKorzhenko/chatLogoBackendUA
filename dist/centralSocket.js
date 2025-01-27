@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendMessageToCentralServer = sendMessageToCentralServer;
 const socket_io_client_1 = require("socket.io-client");
 const socketHandler_1 = require("./socketHandler");
+const sourceHelper_1 = require("./sourceHelper");
 const isProd = true;
 const CENTRAL_SERVER_URL = isProd ? 'http://167.172.179.104:4000' : 'http://localhost:4000';
 console.warn('CENTRAL_SERVER_URL:', CENTRAL_SERVER_URL);
@@ -20,7 +21,7 @@ centralSocket.on('newMessage', (message) => {
     (0, socketHandler_1.notifyClientOfNewMessage)(message.teacherId, message.customerId, {
         text: message.text,
         sender: 'client',
-        source: 'ua',
+        source: sourceHelper_1.defaultSource,
         timestamp: new Date().toISOString(),
         clientId: Number(message.customerId),
         id: message.messageId,

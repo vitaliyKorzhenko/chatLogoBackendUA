@@ -3,6 +3,7 @@ import { ServerTeacher, TeacherCustomerModel, TeacherIdModel } from './types';
 import TeacherHelper from './helpers/teacherHelper';
 import { alfa_chats, alfaCalendarsTable, alfaCustomerAlfaChat, alfaCustomersTable } from './db_pools';
 import { env } from 'process';
+import { defaultSource } from './sourceHelper';
 // MySQL connection pool setup
 require('dotenv').config();
 
@@ -398,7 +399,7 @@ export async function findTeacherCustomerWithChats(pool: Pool, source: string): 
                 console.log(`Fetched ${results.length} records.`, results[0]);
                 results.forEach((result) => {
                     teacherCustomerModels.push({
-                        source: source,
+                        source: defaultSource,
                         trackingCode: result.tracking_code,
                         chatId: result.chat_id,
                         channelId: result.channel_id,

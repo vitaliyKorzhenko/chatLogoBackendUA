@@ -3,6 +3,7 @@ import { ConnectionTeacher } from './connectionTeachers';
 import TeacherHelper from './helpers/teacherHelper';
 import { IChatMessage, TeacherCustomerData, TeacherInfoModel } from './types';
 import { sendMessageToCentralServer } from './centralSocket';
+import { defaultSource } from './sourceHelper';
 
 // Variable to store the io instance
 let ioInstance: Server | null = null;
@@ -90,7 +91,7 @@ export default function socketHandler(io: Server) {
 
         const messages = await TeacherHelper.findChatMessagesByTeacherIdAndCustomerIdAndSource(teacherId, customerId.toString(), 50);
         //update isRead status
-        await TeacherHelper.updateChatMessagesIsReadByTeacherIdAndCustomerIdAndSource(teacherId, customerId.toString(), 'ua');
+        await TeacherHelper.updateChatMessagesIsReadByTeacherIdAndCustomerIdAndSource(teacherId, customerId.toString(), defaultSource);
 
         console.log('[Socket] Messages count:', messages.length);
         if (messages.length > 0) {
@@ -129,7 +130,7 @@ export default function socketHandler(io: Server) {
     socket.on('message_from_teacher', async (data) => {
       try {
         console.warn('[Socket] Message from teacher:', data);
-        const { customerId, teacherId, source, message, isEmail } = data;
+        const { customerId, teacherId, source, message, isEmail, isFile } = data;
         await TeacherHelper.createChatMessage(
           teacherId,
           customerId,
@@ -137,6 +138,7 @@ export default function socketHandler(io: Server) {
           'tg',
           source,
           'teacher',
+          isFile
         );
 
         const teacherInfo: TeacherInfoModel | null = await TeacherHelper.findTeacherCustomerByCustomerIdAndTeacherId(customerId.toString(), Number(teacherId));
@@ -149,6 +151,7 @@ export default function socketHandler(io: Server) {
               message: message.text,
               customer: currentCustomer,
               isEmail,
+              isFile
             });
           }
         }
