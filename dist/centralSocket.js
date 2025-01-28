@@ -13,7 +13,7 @@ const centralSocket = (0, socket_io_client_1.io)(CENTRAL_SERVER_URL, { autoConne
 centralSocket.on('connect', () => {
     console.log('Connected to central WebSocket server');
     // Регистрируем украинский сервис
-    centralSocket.emit('registerService', 'ukrainianService');
+    centralSocket.emit('registerService', sourceHelper_1.defaultService);
 });
 // Обработка сообщений от центрального сервера
 centralSocket.on('newMessage', (message) => {

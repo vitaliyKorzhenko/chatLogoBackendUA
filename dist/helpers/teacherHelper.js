@@ -179,12 +179,13 @@ class TeacherHelper {
         });
     }
     //find teacher by email
-    static findTeacherByEmail(email) {
+    static findTeacherByEmail(source, email) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const teacher = yield Teacher_1.default.findOne({
                     where: {
-                        email,
+                        email: email,
+                        source: source
                     },
                 });
                 return teacher;
@@ -290,11 +291,11 @@ class TeacherHelper {
             }
         });
     }
-    static findTeacherInfoWithCustomersByEmail(email) {
+    static findTeacherInfoWithCustomersByEmail(source, email) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a, _b;
             try {
-                const teacher = yield TeacherHelper.findTeacherByEmail(email);
+                const teacher = yield TeacherHelper.findTeacherByEmail(source, email);
                 if (!teacher) {
                     console.log('Teacher not found');
                     return null;

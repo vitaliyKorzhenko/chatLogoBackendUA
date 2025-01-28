@@ -177,11 +177,12 @@ class TeacherHelper {
     }
 
     //find teacher by email
-    static async findTeacherByEmail(email: string): Promise<Teacher | null> {
+    static async findTeacherByEmail(source:string, email: string): Promise<Teacher | null> {
         try {
         const teacher = await Teacher.findOne({
             where: {
-            email,
+            email: email,
+            source: source
             },
         });
         return teacher;
@@ -294,9 +295,9 @@ class TeacherHelper {
         }
     }
 
-    static async findTeacherInfoWithCustomersByEmail(email: string): Promise<TeacherInfoWithCustomer | null> {
+    static async findTeacherInfoWithCustomersByEmail(source: string, email: string): Promise<TeacherInfoWithCustomer | null> {
         try {
-        const teacher = await TeacherHelper.findTeacherByEmail(email);
+        const teacher = await TeacherHelper.findTeacherByEmail(source, email);
         if (!teacher) {
             console.log('Teacher not found');
             return null;

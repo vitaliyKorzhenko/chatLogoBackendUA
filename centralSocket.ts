@@ -1,7 +1,7 @@
 import { io as Client, Socket } from 'socket.io-client';
 import { notifyClientOfNewMessage } from './socketHandler';
 import { ServerDataMessage } from './types';
-import { defaultSource } from './sourceHelper';
+import { defaultService, defaultSource } from './sourceHelper';
 
 const isProd = true;
 
@@ -28,7 +28,7 @@ centralSocket.on('connect', () => {
   console.log('Connected to central WebSocket server');
 
   // Регистрируем украинский сервис
-  centralSocket.emit('registerService', 'ukrainianService');
+  centralSocket.emit('registerService', defaultService);
 });
 
 

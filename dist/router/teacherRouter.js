@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const teacherHelper_1 = __importDefault(require("../helpers/teacherHelper"));
+const sourceHelper_1 = require("../sourceHelper");
 require('dotenv').config();
 const router = express_1.default.Router();
 // Middleware to check token for all requests
@@ -90,7 +91,7 @@ router.post('/teacher/email', (req, res) => __awaiter(void 0, void 0, void 0, fu
         return res.status(400).json({ message: 'Email is required' });
     }
     try {
-        const teacher = yield teacherHelper_1.default.findTeacherByEmail(email);
+        const teacher = yield teacherHelper_1.default.findTeacherByEmail(sourceHelper_1.defaultSource, email);
         if (!teacher) {
             return res.status(200).json(null);
         }
@@ -104,12 +105,12 @@ router.post('/teacher/email', (req, res) => __awaiter(void 0, void 0, void 0, fu
 //find teacher info by email post method
 router.post('/teacher/info', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     console.log('======= Start find teacher info by email =====', req.body);
-    const { email } = req.body;
+    const { email, source } = req.body;
     if (!email) {
         return res.status(400).json({ message: 'Email is required' });
     }
     try {
-        const teacher = yield teacherHelper_1.default.findTeacherInfoWithCustomersByEmail(email);
+        const teacher = yield teacherHelper_1.default.findTeacherInfoWithCustomersByEmail(sourceHelper_1.defaultSource, email);
         if (!teacher) {
             return res.status(404).json({ message: 'Teacher not found' });
         }
